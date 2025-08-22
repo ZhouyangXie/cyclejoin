@@ -192,6 +192,9 @@ public:
             TransactionCommitAction action);
     };
 
+    std::unique_ptr<CachedPreparedStatement> getCachedStatement(std::string_view query);
+    std::unique_ptr<QueryResult> executeCachedStatement(std::unique_ptr<CachedPreparedStatement> cachedPreparedStatement);
+
 private:
     void validateTransaction(bool readOnly, bool requireTransaction) const;
 

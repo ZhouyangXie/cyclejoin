@@ -1,2 +1,2 @@
 add_executable(kuzu_cpp_api_debug main.cpp)
-target_link_libraries(kuzu_cpp_api_debug kuzu)
+target_link_libraries(kuzu_cpp_api_debug kuzu_shared)

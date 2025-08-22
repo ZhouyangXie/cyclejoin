@@ -667,5 +667,33 @@ bool ClientContext::canExecuteWriteQuery() const {
     return true;
 }
 
+std::unique_ptr<CachedPreparedStatement> ClientContext::getCachedStatement(std::string_view query){
+    auto parsedStatements = parseQuery(query);
+    KU_ASSERT(parsedStatements.size() == 1);
+    auto [_, cachedStatement] = prepareNoLock(parsedStatements[0], false);
+    return std::move(cachedStatement);
+}
+
+std::unique_ptr<QueryResult> ClientContext::executeCachedStatement(std::unique_ptr<CachedPreparedStatement> cachedPreparedStatement){
+    auto profiler = std::make_unique<Profiler>();
+    auto executionContext = std::make_shared<processor::ExecutionContext>(
+        profiler.get(), 
+        this, 
+        localDatabase->getNextQueryID()
+    );
+
+    auto mapper = PlanMapper(executionContext.get());
+
+    auto physicalPlan = mapper.mapLogicalPlanToPhysical(
+        cachedPreparedStatement->logicalPlan.get(), cachedPreparedStatement->columns
+    );
+
+    std::shared_ptr<FactorizedTable> resultFT = localDatabase->queryProcessor->execute(
+        physicalPlan.get(), executionContext.get()
+    );
+
+    return std::make_unique<MaterializedQueryResult>(cachedPreparedStatement->getColumnNames(), cachedPreparedStatement->getColumnTypes(), resultFT);
+}
+
 } // namespace main
 } // namespace kuzu

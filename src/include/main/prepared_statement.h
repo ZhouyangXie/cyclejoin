@@ -26,7 +26,7 @@ class LogicalPlan;
 namespace main {
 
 // Prepared statement cached in client context and NEVER serialized to client side.
-struct CachedPreparedStatement {
+struct KUZU_API CachedPreparedStatement {
     bool useInternalCatalogEntry = false;
     std::shared_ptr<parser::Statement> parsedStatement;
     std::unique_ptr<planner::LogicalPlan> logicalPlan;
