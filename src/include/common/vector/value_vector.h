@@ -2,6 +2,7 @@
 
 #include <optional>
 #include <utility>
+#include <string>
 
 #include "common/assert.h"
 #include "common/cast.h"
@@ -136,6 +137,8 @@ public:
     SelectionVector* getSelVectorPtr() const {
         return state ? &state->getSelVectorUnsafe() : nullptr;
     }
+
+    std::string toString() const;
 
 private:
     uint32_t getDataTypeSize(const LogicalType& type);

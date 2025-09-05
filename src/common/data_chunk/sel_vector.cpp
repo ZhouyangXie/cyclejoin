@@ -44,5 +44,21 @@ std::vector<SelectionVector*> SelectionVector::fromValueVectors(
     return ret;
 }
 
+std::string SelectionVector::toString() const{
+    std::string s = "";
+    if(isUnfiltered()){
+        s += ("(size=all):[0-" + std::to_string(getSelSize() - 1) + "]");
+    }
+    else{
+        s += "(size=" + std::to_string(getSelSize()) + "):[";
+        auto selected_pos = getSelectedPositions();
+        for(auto pos: selected_pos){
+            s += (std::to_string(pos) + ",");
+        }
+        s += "].";
+    }
+    return s;
+}
+
 } // namespace common
 } // namespace kuzu

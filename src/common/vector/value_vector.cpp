@@ -456,6 +456,24 @@ void ValueVector::setNull(uint32_t pos, bool isNull) {
     nullMask.setNull(pos, isNull);
 }
 
+std::string ValueVector::toString() const {
+    std::string s = "(DataType=" + dataType.toString() + ")";
+    if(state->isFlat()){
+        s += "(Flat)";
+    } else {
+        s += "(Unflat)";
+    }
+    auto selSize = state->getSelVector().getSelSize();
+    s += ("(SelSize=" + std::to_string(selSize) + ")");
+    s += "[";
+    for (auto i = 0u; i < selSize; i++) {
+        s += (getAsValue(state->getSelVector()[i])->toString() + ",");
+    }
+    s += "]";
+    s += ("(SelVec=" + getSelVectorPtr()->toString() + ")");
+    return s;
+}
+
 void StringVector::addString(ValueVector* vector, uint32_t vectorPos, ku_string_t& srcStr) {
     KU_ASSERT(vector->dataType.getPhysicalType() == PhysicalTypeID::STRING);
     auto stringBuffer = ku_dynamic_cast<StringAuxiliaryBuffer*>(vector->auxiliaryBuffer.get());

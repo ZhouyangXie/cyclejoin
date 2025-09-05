@@ -165,6 +165,8 @@ public:
     static std::vector<SelectionVector*> fromValueVectors(
         const std::vector<std::shared_ptr<common::ValueVector>>& vec);
 
+    std::string toString() const;
+
 private:
     std::unique_ptr<sel_t[]> selectedPositionsBuffer;
     sel_t capacity;
