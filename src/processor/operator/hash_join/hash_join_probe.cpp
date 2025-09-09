@@ -74,8 +74,12 @@ bool HashJoinProbe::getMatchedTuplesForUnFlatKey(ExecutionContext* context) {
         return false;
     }
     saveSelVector(*keyVector->state);
+    // Find the entrance of the chain.
+    // Assign the entrance to `hashSelVec`(successful?) and `probeState->probeTuples`(pointer to the entrance tuple).
     sharedState->getHashTable()->probe(keyVectors, *hashVector, hashSelVec, tmpHashVector.get(),
         probeState->probedTuples.get());
+    // Look for the key in the chain.
+    // The matched tuples are stored in `probeState->matchedSelVector`(successful?) and `probeState->matchedTuples`(pointer to the matched tuple).
     auto numMatchedTuples =
         sharedState->getHashTable()->matchUnFlatKey(keyVector, probeState->probedTuples.get(),
             probeState->matchedTuples.get(), probeState->matchedSelVector);
