@@ -62,5 +62,20 @@ uint64_t FactorizedTableSchema::getNumUnFlatColumns() const {
     return numUnflatColumns;
 }
 
+std::string FactorizedTableSchema::toString() const {
+    std::string s = "Columns:[";
+    for(size_t i = 0; i < getNumColumns(); i++){
+        s += "(";
+        s += "offset=" + std::to_string(colOffsets[i]) + ",";
+        s += "isUnFlat=" + std::to_string(columns[i].isFlat()) + ",";
+        s += "groupID=" + std::to_string(columns[i].getGroupID()) + ",";
+        s += "numBytes=" + std::to_string(columns[i].getNumBytes()) + ",";
+        s += "notNull=" + std::to_string(columns[i].hasNoNullGuarantee()) + ",";
+        s += ")";
+    }
+    s += "]";
+    return s;
+}
+
 } // namespace processor
 } // namespace kuzu

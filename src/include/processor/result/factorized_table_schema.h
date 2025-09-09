@@ -82,6 +82,7 @@ public:
     uint64_t getNumFlatColumns() const;
     uint64_t getNumUnFlatColumns() const;
 
+    std::string toString() const;
 private:
     FactorizedTableSchema(const FactorizedTableSchema& other);
 
