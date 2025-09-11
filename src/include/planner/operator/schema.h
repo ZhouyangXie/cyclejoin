@@ -118,7 +118,9 @@ public:
 
     void clear();
 
-private:
+    std::string toString() const;
+
+    private:
     size_t getNumGroups(bool isFlat) const;
 
 private:

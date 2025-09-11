@@ -125,6 +125,24 @@ size_t Schema::getNumGroups(bool isFlat) const {
     return result;
 }
 
+std::string Schema::toString() const{
+    std::string s = "";
+    for(size_t i = 0; i < getNumGroups(); i++){
+        s += "groups[" + std::to_string(i) + "]={";
+        for(auto e: groups[i]->expressions){
+            s += e->toString() + ",";
+        }
+        s += "},";
+    }
+    s += "InScope{";
+    for(auto e: expressionsInScope){
+        s += e->toString() + ",";
+    }
+    s += "}";
+    return s;
+}
+
+
 f_group_pos SchemaUtils::getLeadingGroupPos(const std::unordered_set<f_group_pos>& groupPositions,
     const Schema& schema) {
     auto leadingGroupPos = INVALID_F_GROUP_POS;
