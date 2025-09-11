@@ -43,6 +43,7 @@ enum class PhysicalOperatorType : uint8_t {
     INDEX_LOOKUP,
     INSERT,
     INTERSECT_BUILD,
+    INTERSECT_MULTIWAY,
     INTERSECT,
     INSTALL_EXTENSION,
     LIMIT,
