@@ -40,6 +40,7 @@ enum class LogicalOperatorType : uint8_t {
     IMPORT_DATABASE,
     INDEX_LOOK_UP,
     INTERSECT,
+    INTERSECT_MULTIWAY,
     INSERT,
     LIMIT,
     MERGE,
