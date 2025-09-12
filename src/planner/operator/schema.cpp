@@ -128,7 +128,9 @@ size_t Schema::getNumGroups(bool isFlat) const {
 std::string Schema::toString() const{
     std::string s = "";
     for(size_t i = 0; i < getNumGroups(); i++){
-        s += "groups[" + std::to_string(i) + "]={";
+        s += "groups[" + std::to_string(i) + "](";
+        s += groups[i]->isFlat()?"flat":"unflat";
+        s += ")={";
         for(auto e: groups[i]->expressions){
             s += e->toString() + ",";
         }
