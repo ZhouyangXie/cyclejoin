@@ -13,15 +13,11 @@ struct IntersecMultiwaytPrintInfo final : OPPrintInfo {
     std::vector<std::shared_ptr<binder::Expression>> right_nodes;
     std::vector<std::vector<bool>> connectivity;
 
-    explicit IntersecMultiwaytPrintInfo(
-        std::vector<std::shared_ptr<binder::Expression>> left_nodes,
+    explicit IntersecMultiwaytPrintInfo(std::vector<std::shared_ptr<binder::Expression>> left_nodes,
         std::vector<std::shared_ptr<binder::Expression>> right_nodes,
-        std::vector<std::vector<bool>> connectivity
-    ):
-        left_nodes{std::move(left_nodes)},
-        right_nodes{std::move(right_nodes)},
-        connectivity{std::move(connectivity)}
-        {}
+        std::vector<std::vector<bool>> connectivity)
+        : left_nodes{std::move(left_nodes)}, right_nodes{std::move(right_nodes)},
+          connectivity{std::move(connectivity)} {}
 
     std::string toString() const override;
     std::unique_ptr<OPPrintInfo> copy() const override {
@@ -29,14 +25,10 @@ struct IntersecMultiwaytPrintInfo final : OPPrintInfo {
     }
 
 private:
-    IntersecMultiwaytPrintInfo(const IntersecMultiwaytPrintInfo& other) :
-        OPPrintInfo{other},
-        left_nodes{other.left_nodes},
-        right_nodes{other.right_nodes},
-        connectivity{other.connectivity}
-        {}
+    IntersecMultiwaytPrintInfo(const IntersecMultiwaytPrintInfo& other)
+        : OPPrintInfo{other}, left_nodes{other.left_nodes}, right_nodes{other.right_nodes},
+          connectivity{other.connectivity} {}
 };
-
 
 struct IntersectMultiwayDataInfo {
     // DataPos of each left (probe) side key
@@ -62,7 +54,8 @@ struct IntersectMultiwayDataInfo {
         std::vector<std::vector<std::vector<DataPos>>> payloadsDataPos,
         std::vector<std::vector<std::vector<size_t>>> payloadsColRange)
         : keyDataPos{std::move(keyDataPos)}, outputDataPos{std::move(outputDataPos)},
-          connectivity{std::move(connectivity)}, keyOffsetInTuple{std::move(keyOffsetInTuple)}, payloadsDataPos{std::move(payloadsDataPos)},
+          connectivity{std::move(connectivity)}, keyOffsetInTuple{std::move(keyOffsetInTuple)},
+          payloadsDataPos{std::move(payloadsDataPos)},
           payloadsColRange{std::move(payloadsColRange)} {
         size_t numLeftNodes = keyDataPos.size();
         KU_ASSERT(numLeftNodes >= 2);
@@ -86,7 +79,9 @@ struct IntersectMultiwayDataInfo {
             for (size_t j = 0; j < numRightNodes; j++) {
                 KU_ASSERT(i_payloadsDataPos[j].size() == i_payloadsColRange[j].size());
                 if (i_connectivity[j]) {
-                    KU_ASSERT(i_keyOffsetInTuple[j] != -1u); 
+                    KU_ASSERT(i_keyOffsetInTuple[j] != -1u);
+                    // TODO: currently we do not support populating the payloads
+                    KU_ASSERT(i_payloadsDataPos[j].size() == 0);
                     for (auto& pos : i_payloadsDataPos[j]) {
                         KU_ASSERT(pos.isValid());
                     }
@@ -96,8 +91,7 @@ struct IntersectMultiwayDataInfo {
                     }
                     left2right_idx[i].push_back(j);
                     i_non_empty_count++;
-                }
-                else{
+                } else {
                     KU_ASSERT(i_keyOffsetInTuple[j] == -1u);
                     KU_ASSERT(i_payloadsDataPos.size() == 0);
                     KU_ASSERT(i_payloadsColRange.size() == 0);
@@ -109,7 +103,7 @@ struct IntersectMultiwayDataInfo {
             right2left_idx.emplace_back();
             size_t j_non_empty_count = 0;
             for (size_t i = 0; i < numLeftNodes; i++) {
-                if (payloadsDataPos[i][j].size() > 0) {
+                if (connectivity[i][j]) {
                     right2left_idx[j].push_back(i);
                     j_non_empty_count++;
                 }
@@ -136,16 +130,17 @@ public:
         KU_ASSERT(probeChild->getOperatorType() == PhysicalOperatorType::FLATTEN);
         KU_ASSERT(sharedHTs.size() == numLeftNodes());
         // TODO: check that the number of columns, flatness of each sharedHT is correct
-        for(size_t i = 0; i < numLeftNodes(); i++){
+        for (size_t i = 0; i < numLeftNodes(); i++) {
             auto ht_schema = sharedHTs[i]->getHashTable()->getTableSchema();
             // TODO: currently not considering other payload attributes
             KU_ASSERT(ht_schema->getNumColumns() == info->left2right_idx.size() + 3);
             KU_ASSERT(ht_schema->getColumn(0)->isFlat());
-            for(size_t j = 0; j < info->left2right_idx.size(); j++){
+            for (size_t j = 0; j < info->left2right_idx.size(); j++) {
                 KU_ASSERT(!ht_schema->getColumn(1 + j)->isFlat());
             }
-            KU_ASSERT(ht_schema->getColumn(info->left2right_idx.size() + 1)->isFlat());  // hash
-            KU_ASSERT(ht_schema->getColumn(info->left2right_idx.size() + 2)->isFlat());  // chaining pointer
+            KU_ASSERT(ht_schema->getColumn(info->left2right_idx.size() + 1)->isFlat()); // hash
+            KU_ASSERT(ht_schema->getColumn(info->left2right_idx.size() + 2)
+                    ->isFlat()); // chaining pointer
         }
     }
 
@@ -178,10 +173,12 @@ private:
     std::vector<std::vector<std::vector<common::ValueVector*>>> payloadVectorsToScanInto;
 
     // pointer to the probed tuples in each hash table
-    // the first 2 dimensions are of size numLeftNodes() x numRightNodes(), third dimension is the number of probed tuples
+    // the first 2 dimensions are of size numLeftNodes() x numRightNodes(), third dimension is the
+    // number of probed tuples
     std::vector<std::vector<std::vector<common::overflow_value_t>>> probedIds;
     // sel vectors on each of probedIds
-    std::vector<std::vector<std::vector<std::unique_ptr<common::SelectionVector>>>> intersectSelVectors;
+    std::vector<std::vector<std::vector<std::unique_ptr<common::SelectionVector>>>>
+        intersectSelVectors;
 
     // this operator outputs the Cartesian product of intersections
     // this state stores the loop state
@@ -189,21 +186,21 @@ private:
     std::shared_ptr<IntersectionLoopState> loopState;
 };
 
-
 struct IntersectionLoopState {
     //  cursor, size() == op->numRightNodes()
     std::vector<size_t> tuple_cursors;
-    IntersectMultiway * op;
+    IntersectMultiway* op;
     bool finished;
     std::vector<size_t> smallesLeftSide;
 
-    explicit IntersectionLoopState(IntersectMultiway * op): op{op}, finished{false} {
+    explicit IntersectionLoopState(IntersectMultiway* op) : op{op}, finished{false} {
         tuple_cursors.resize(op->numRightNodes(), 0);
         smallesLeftSide.resize(op->numRightNodes(), 0);
         // Choose the one with least number of tuples to iterate
-        for(size_t j = 0; j < op->numRightNodes(); j++){
-            for(auto i: op->info->right2left_idx[j]){
-                if(op->intersectSelVectors[i][j].size() < op->intersectSelVectors[smallesLeftSide[j]][j].size()){
+        for (size_t j = 0; j < op->numRightNodes(); j++) {
+            for (auto i : op->info->right2left_idx[j]) {
+                if (op->intersectSelVectors[i][j].size() <
+                    op->intersectSelVectors[smallesLeftSide[j]][j].size()) {
                     smallesLeftSide[j] = i;
                 }
             }
@@ -213,20 +210,16 @@ struct IntersectionLoopState {
     void reset();
 
     bool cursorFinished(size_t j) const {
-        return cursorAt(j) >= op->probedIds[op->info->right2left_idx[j][smallesLeftSide[j]]][j].size();
+        return cursorAt(j) >=
+               op->probedIds[op->info->right2left_idx[j][smallesLeftSide[j]]][j].size();
     };
 
-    bool hasFinished() const{
-        return finished;
-    }
+    bool hasFinished() const { return finished; }
 
     void gotoNext();
 
-    size_t cursorAt(size_t j) const {
-        return tuple_cursors[j];
-    }
+    size_t cursorAt(size_t j) const { return tuple_cursors[j]; }
 };
-
 
 } // namespace processor
 

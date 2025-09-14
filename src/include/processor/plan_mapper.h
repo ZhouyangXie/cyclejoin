@@ -123,6 +123,7 @@ public:
     std::unique_ptr<PhysicalOperator> mapIndexLookup(
         const planner::LogicalOperator* logicalOperator);
     std::unique_ptr<PhysicalOperator> mapIntersect(const planner::LogicalOperator* logicalOperator);
+    std::unique_ptr<PhysicalOperator> mapIntersectMultiway(const planner::LogicalOperator* logicalOperator);
     std::unique_ptr<PhysicalOperator> mapInsert(const planner::LogicalOperator* logicalOperator);
     std::unique_ptr<PhysicalOperator> mapLimit(const planner::LogicalOperator* logicalOperator);
     std::unique_ptr<PhysicalOperator> mapMerge(const planner::LogicalOperator* logicalOperator);

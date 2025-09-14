@@ -125,6 +125,9 @@ std::unique_ptr<PhysicalOperator> PlanMapper::mapOperator(const LogicalOperator*
     case LogicalOperatorType::INTERSECT: {
         physicalOperator = mapIntersect(logicalOperator);
     } break;
+    case LogicalOperatorType::INTERSECT_MULTIWAY: {
+        physicalOperator = mapIntersectMultiway(logicalOperator);
+    } break;
     case LogicalOperatorType::INSERT: {
         physicalOperator = mapInsert(logicalOperator);
     } break;
