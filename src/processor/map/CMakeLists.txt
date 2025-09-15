@@ -27,6 +27,7 @@ add_library(kuzu_processor_mapper
         map_hash_join.cpp
         map_index_scan_node.cpp
         map_intersect.cpp
+        map_intersect_multiway.cpp
         map_label_filter.cpp
         map_limit.cpp
         map_merge.cpp

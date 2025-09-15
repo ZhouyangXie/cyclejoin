@@ -20,6 +20,7 @@ add_library(kuzu_planner_operator
         logical_hash_join.cpp
         logical_table_function_call.cpp
         logical_intersect.cpp
+        logical_intersect_multiway.cpp
         logical_limit.cpp
         logical_operator.cpp
         logical_order_by.cpp
