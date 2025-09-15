@@ -126,6 +126,25 @@ std::vector<common::idx_t> SubqueryGraph::getNbrNodeIndices() const {
     return std::vector<common::idx_t>{result.begin(), result.end()};
 }
 
+std::string SubqueryGraph::toString() const{
+    std::string s = "Nodes={";
+    for(auto i = 0u; i < queryGraph.getNumQueryNodes(); i++){
+        if(!queryNodesSelector[i]){
+            continue;
+        }
+        s += queryGraph.getQueryNode(i)->toString() + ",";
+    }
+    s += "},Rels={";
+    for(auto i = 0u; i < queryGraph.getNumQueryRels(); i++){
+        if(!queryRelsSelector[i]){
+            continue;
+        }
+        s += queryGraph.getQueryRel(i)->toString() + ",";
+    }
+    s += "}";
+    return s;
+}
+
 subquery_graph_set_t SubqueryGraph::getBaseNbrSubgraph() const {
     subquery_graph_set_t result;
     for (auto& nodePos : getNodeNbrPositions()) {

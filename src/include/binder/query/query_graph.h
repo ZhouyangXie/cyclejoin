@@ -63,6 +63,8 @@ struct SubqueryGraph {
                queryNodesSelector == other.queryNodesSelector;
     }
 
+    std::string toString() const;
+
 private:
     subquery_graph_set_t getBaseNbrSubgraph() const;
     subquery_graph_set_t getNextNbrSubgraphs(const SubqueryGraph& prevNbr) const;
