@@ -1,6 +1,7 @@
 #include "planner/join_order/cost_model.h"
 #include "planner/operator/logical_hash_join.h"
 #include "planner/operator/logical_intersect.h"
+#include "planner/operator/logical_intersect_multiway.h"
 #include "planner/planner.h"
 
 using namespace kuzu::common;
@@ -116,6 +117,31 @@ void Planner::appendIntersect(const std::shared_ptr<Expression>& intersectNodeID
     intersect->setCardinality(cardinalityEstimator.estimateIntersect(boundNodeIDs,
         probePlan.getLastOperatorRef(), buildOps));
     probePlan.setCost(CostModel::computeIntersectCost(probePlan, buildPlans));
+    probePlan.setLastOperator(std::move(intersect));
+}
+
+void Planner::appendIntersectMultiway(
+    const binder::expression_map<binder::expression_vector> & probeNodeToBuildNodes,
+    LogicalPlan & probePlan,
+    binder::expression_map<LogicalPlan> & probeNodeToBuildPlans
+){
+    binder::expression_map<std::shared_ptr<LogicalOperator>> probeNodeToBuildChildOperator;
+    for(auto [exp, plan]: probeNodeToBuildPlans){
+        probeNodeToBuildChildOperator[exp] = plan.getLastOperator();
+    }
+    auto intersect = std::make_shared<LogicalIntersectMultiway>(
+        probeNodeToBuildNodes,
+        probePlan.getLastOperator(),
+        std::move(probeNodeToBuildChildOperator)
+    );
+    appendFlattens(intersect->getGroupsPosToFlattenOnProbeSide(), probePlan);
+    intersect->setChild(0, probePlan.getLastOperator());
+    for (auto exp: intersect->leftExpressions) {
+        auto & plan = probeNodeToBuildPlans[exp];
+        appendFlattens(intersect->getGroupsPosToFlattenOnBuildSide(intersect->leftExpressionIdx[exp]), plan);
+        intersect->setChild(intersect->leftExpressionIdx[exp] + 1, plan.getLastOperator());
+    }
+    intersect->computeFactorizedSchema();
     probePlan.setLastOperator(std::move(intersect));
 }
 

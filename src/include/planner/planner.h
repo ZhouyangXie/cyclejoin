@@ -272,6 +272,11 @@ public:
     void appendIntersect(const std::shared_ptr<binder::Expression>& intersectNodeID,
         binder::expression_vector& boundNodeIDs, LogicalPlan& probePlan,
         std::vector<LogicalPlan>& buildPlans);
+    void appendIntersectMultiway(
+        const binder::expression_map<binder::expression_vector> & probeNodeToBuildNodes,
+        LogicalPlan & probeChild,
+        binder::expression_map<LogicalPlan> & probeNodeToBuildChild
+    );
 
     void appendCrossProduct(const LogicalPlan& probePlan, const LogicalPlan& buildPlan,
         LogicalPlan& resultPlan);

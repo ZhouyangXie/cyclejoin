@@ -68,6 +68,9 @@ public:
 
     size_t getNumRightNode() const { return rightExpressions.size(); }
 
+    f_group_pos_set getGroupsPosToFlattenOnProbeSide();
+    f_group_pos_set getGroupsPosToFlattenOnBuildSide(uint32_t buildIdx);
+
 public:
     // initialized by constructor args
     binder::expression_map<binder::expression_vector> leftToRightExpression;

@@ -17,6 +17,19 @@ std::string LogicalIntersectMultiway::getExpressionsForPrinting() const {
     return s;
 }
 
+f_group_pos_set LogicalIntersectMultiway::getGroupsPosToFlattenOnProbeSide(){
+    f_group_pos_set result;
+    for (auto& keyNodeID : leftExpressions) {
+        result.insert(children[0]->getSchema()->getGroupPos(*keyNodeID));
+    }
+    return result;
+}
+
+f_group_pos_set LogicalIntersectMultiway::getGroupsPosToFlattenOnBuildSide(uint32_t buildIdx){
+    return {children[buildIdx + 1]->getSchema()->getGroupPos(*leftExpressions[buildIdx])};
+}
+
+
 void LogicalIntersectMultiway::computeFactorizedSchema() {
     schema = children[0]->getSchema()->copy();
     for (auto [rightNode, leftNodes] : rightToLeftExpression) {
