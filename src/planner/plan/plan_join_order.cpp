@@ -1,6 +1,7 @@
 #include <cmath>
 
 #include "binder/expression_visitor.h"
+#include "binder/query/query_graph_simple.hpp"
 #include "common/enums/join_type.h"
 #include "common/enums/rel_direction.h"
 #include "common/utils.h"
@@ -120,6 +121,24 @@ LogicalPlan Planner::planQueryGraphCollection(const QueryGraphCollection& queryG
     return plan;
 }
 
+
+std::string hintToString(std::shared_ptr<binder::BoundJoinHintNode> hint, size_t depth){
+    std::string s = "";
+    for(size_t i=0; i < depth; i++){
+        s += "\t";
+    }
+    if (hint->nodeOrRel == nullptr){
+        s += "OP\n";
+    }
+    else {
+        s += hint->nodeOrRel->toString() + "\n";
+    }
+    for(auto child: hint->children){
+        s += hintToString(child, depth + 1);
+    }
+    return s;
+}
+
 LogicalPlan Planner::planQueryGraph(const QueryGraph& queryGraph,
     const QueryGraphPlanningInfo& info) {
     context.init(&queryGraph, info.predicates);
@@ -150,6 +169,51 @@ LogicalPlan Planner::planQueryGraph(const QueryGraph& queryGraph,
     }
     return bestPlan;
 }
+
+LogicalPlan Planner::planQueryGraphWithMultiwayIntersect(
+    const QueryGraph& queryGraph,
+    const QueryGraphPlanningInfo& info) {
+    auto queryGraphSimple = QueryGraphSimple::fromQueryGraph(queryGraph);
+    auto [probeGraphSimple, buildGraphsSimple, remainingGraphsSimple] = queryGraphSimple.findOneMaximalDense();
+    if(probeGraphSimple.isEmpty()){
+        return planQueryGraph(queryGraph, info);
+    }
+    // plan the probe side recursively
+    auto [probeGraph, probeInfo] = probeGraphSimple.toQueryGraphAndInfo(queryGraph, info);
+    auto probeGraphPlan = planQueryGraphWithMultiwayIntersect(probeGraph, probeInfo);
+    // plan each build graph by a hint tree
+    binder::expression_map<LogicalPlan> probeNodeToBuildGraphPlans;
+    binder::expression_map<binder::expression_vector> probeNodeToBuildNodes;
+    for(auto & buildGraphSimple: buildGraphsSimple){
+        auto [buildGraph, buildGraphInfo] = buildGraphSimple.toQueryGraphAndInfo(queryGraph, info);
+        auto [hint_tree, probe_node, build_nodes] = buildGraphSimple.toHintTree(queryGraph);
+        buildGraphInfo.hint = hint_tree;
+        probeNodeToBuildGraphPlans[probe_node] = planQueryGraph(buildGraph, buildGraphInfo);
+        probeNodeToBuildNodes[probe_node] = build_nodes;
+    }
+    // combine probeGraph and buildGraphs by appendIntersectMultiway
+    appendIntersectMultiway(probeNodeToBuildNodes, probeGraphPlan, probeNodeToBuildGraphPlans);
+    LogicalPlan finalPlan = probeGraphPlan;
+    // plan each remaining graph recursively and hash-joined by the dense subgraph
+    for(auto & remainingGraphSimple: remainingGraphsSimple){
+        auto [remainingGraph, remainingGraphInfo] = remainingGraphSimple.toQueryGraphAndInfo(queryGraph, info);
+        auto remainingGraphPlan = planQueryGraphWithMultiwayIntersect(remainingGraph, remainingGraphInfo);
+        // find join condition (node intersection)
+        expression_vector join_nodes;
+        for(auto & join_node: remainingGraphSimple.nodes){
+            for(auto & buildGraphSimple: buildGraphsSimple){
+                if(buildGraphSimple.nodes.contains(join_node)){
+                    join_nodes.push_back(queryGraph.getQueryNode(join_node));
+                    break;
+                }
+            }
+        }
+        // combine the remaining by hash join (bigger graph as the build side)
+        appendHashJoin(join_nodes, JoinType::INNER, remainingGraphPlan, finalPlan, finalPlan);
+    }
+    return finalPlan;
+}
+
 
 void Planner::planLevel(uint32_t level) {
     KU_ASSERT(level > 1);

@@ -156,6 +156,10 @@ public:
         const QueryGraphPlanningInfo& info);
     LogicalPlan planQueryGraph(const binder::QueryGraph& queryGraph,
         const QueryGraphPlanningInfo& info);
+    LogicalPlan planQueryGraphWithMultiwayIntersect(
+        const binder::QueryGraph& queryGraph,
+        const QueryGraphPlanningInfo& info
+    );
 
     // Plan node/rel table scan
     void planBaseTableScans(const QueryGraphPlanningInfo& info);
@@ -351,6 +355,8 @@ private:
     JoinOrderEnumeratorContext context;
     std::vector<extension::PlannerExtension*> plannerExtensions;
 };
+
+std::string hintToString(std::shared_ptr<binder::BoundJoinHintNode> hint, size_t depth = 0);
 
 } // namespace planner
 } // namespace kuzu
