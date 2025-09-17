@@ -1,5 +1,7 @@
 #include <cmath>
 
+#include "common/enums/subquery_type.h"
+#include "main/client_context.h"
 #include "binder/expression_visitor.h"
 #include "binder/query/query_graph_simple.hpp"
 #include "common/enums/join_type.h"
@@ -150,6 +152,12 @@ LogicalPlan Planner::planQueryGraph(const QueryGraph& queryGraph,
         auto plan = JoinPlanSolver(this).solve(joinTree);
         return plan.copy();
     }
+    if (clientContext->getClientConfig()->enableMultiwayIntersect && info.subqueryType == SubqueryPlanningType::NONE){
+        auto plan = planQueryGraphWithMultiwayIntersect(queryGraph, info);
+        if(!plan.isEmpty()){
+            return plan;
+        }
+    }
     planBaseTableScans(info);
     context.currentLevel++;
     while (context.currentLevel < context.maxLevel) {
@@ -176,7 +184,7 @@ LogicalPlan Planner::planQueryGraphWithMultiwayIntersect(
     auto queryGraphSimple = QueryGraphSimple::fromQueryGraph(queryGraph);
     auto [probeGraphSimple, buildGraphsSimple, remainingGraphsSimple] = queryGraphSimple.findOneMaximalDense();
     if(probeGraphSimple.isEmpty()){
-        return planQueryGraph(queryGraph, info);
+        return LogicalPlan();
     }
     // plan the probe side recursively
     auto [probeGraph, probeInfo] = probeGraphSimple.toQueryGraphAndInfo(queryGraph, info);

@@ -70,6 +70,7 @@ ClientContext::ClientContext(Database* database)
         ClientConfigDefault::RECURSIVE_PATTERN_FACTOR;
     clientConfig.disableMapKeyCheck = ClientConfigDefault::DISABLE_MAP_KEY_CHECK;
     clientConfig.warningLimit = ClientConfigDefault::WARNING_LIMIT;
+    clientConfig.enableMultiwayIntersect = ClientConfigDefault::ENABLE_MULTIWAY_INTERSECT;
     progressBar = std::make_unique<ProgressBar>(clientConfig.enableProgressBar);
 }
 

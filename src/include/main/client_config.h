@@ -23,6 +23,7 @@ struct ClientConfigDefault {
     static constexpr uint64_t WARNING_LIMIT = 8 * 1024;
     static constexpr bool ENABLE_PLAN_OPTIMIZER = true;
     static constexpr bool ENABLE_INTERNAL_CATALOG = false;
+    static constexpr bool ENABLE_MULTIWAY_INTERSECT = false;
 };
 
 struct ClientConfig {
@@ -57,6 +58,8 @@ struct ClientConfig {
     bool enablePlanOptimizer = ClientConfigDefault::ENABLE_PLAN_OPTIMIZER;
     // If use internal catalog during binding
     bool enableInternalCatalog = ClientConfigDefault::ENABLE_INTERNAL_CATALOG;
+    // use multiway WCOJ optimizer
+    bool enableMultiwayIntersect = ClientConfigDefault::ENABLE_MULTIWAY_INTERSECT;
 };
 
 } // namespace main

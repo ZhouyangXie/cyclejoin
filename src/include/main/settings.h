@@ -253,5 +253,17 @@ struct EnableInternalCatalogSetting {
     }
 };
 
+struct EnableMultiwayIntersectSetting {
+    static constexpr auto name = "enable_multiway_intersect";
+    static constexpr auto inputType = common::LogicalTypeID::BOOL;
+    static void setContext(ClientContext* context, const common::Value& parameter) {
+        parameter.validateType(inputType);
+        context->getClientConfigUnsafe()->enableMultiwayIntersect = parameter.getValue<bool>();
+    }
+    static common::Value getSetting(const ClientContext* context) {
+        return common::Value(context->getClientConfig()->enableMultiwayIntersect);
+    }
+};
+
 } // namespace main
 } // namespace kuzu
