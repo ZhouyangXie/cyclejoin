@@ -314,7 +314,7 @@ struct QueryGraphSimple {
         info.predicates.clear();
         // filter relevant info
         for (auto predicate : ref_info.predicates) {
-            if (ref_graph.canProjectExpression(predicate)) {
+            if (graph.canProjectExpression(predicate)) {
                 info.predicates.push_back(predicate);
             }
         }
@@ -348,7 +348,7 @@ struct QueryGraphSimple {
             new_node->addChild(hint_tree_node);
             new_node->addChild(leaf);
             hint_tree_node = new_node;
-            build_node_exps.push_back(ref_graph.getQueryNode(neighbor));
+            build_node_exps.push_back(ref_graph.getQueryNode(neighbor)->getInternalID());
         }
         for (auto& neighbor : edges[center]) {
             auto node = ref_graph.getQueryNode(neighbor);
@@ -361,7 +361,7 @@ struct QueryGraphSimple {
         }
         // TODO: make sure the order in build_nodes is the same as the key order in HT!
         std::reverse(build_node_exps.begin(), build_node_exps.end());
-        return {hint_tree_node, center_exp, build_node_exps};
+        return {hint_tree_node, center_exp->getInternalID(), build_node_exps};
     }
 
     Nodes nodes;

@@ -132,13 +132,13 @@ std::string Schema::toString() const{
         s += groups[i]->isFlat()?"flat":"unflat";
         s += ")={";
         for(auto e: groups[i]->expressions){
-            s += e->toString() + ",";
+            s += e->getUniqueName() + ",";
         }
         s += "},";
     }
     s += "InScope{";
     for(auto e: expressionsInScope){
-        s += e->toString() + ",";
+        s += e->getUniqueName() + ",";
     }
     s += "}";
     return s;

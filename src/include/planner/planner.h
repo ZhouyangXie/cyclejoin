@@ -277,7 +277,7 @@ public:
         binder::expression_vector& boundNodeIDs, LogicalPlan& probePlan,
         std::vector<LogicalPlan>& buildPlans);
     void appendIntersectMultiway(
-        const binder::expression_map<binder::expression_vector> & probeNodeToBuildNodes,
+        binder::expression_map<binder::expression_vector> probeNodeToBuildNodes,
         LogicalPlan & probeChild,
         binder::expression_map<LogicalPlan> & probeNodeToBuildChild
     );

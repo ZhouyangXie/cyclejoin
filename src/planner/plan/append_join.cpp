@@ -121,7 +121,7 @@ void Planner::appendIntersect(const std::shared_ptr<Expression>& intersectNodeID
 }
 
 void Planner::appendIntersectMultiway(
-    const binder::expression_map<binder::expression_vector> & probeNodeToBuildNodes,
+    binder::expression_map<binder::expression_vector> probeNodeToBuildNodes,
     LogicalPlan & probePlan,
     binder::expression_map<LogicalPlan> & probeNodeToBuildPlans
 ){
@@ -130,7 +130,7 @@ void Planner::appendIntersectMultiway(
         probeNodeToBuildChildOperator[exp] = plan.getLastOperator();
     }
     auto intersect = std::make_shared<LogicalIntersectMultiway>(
-        probeNodeToBuildNodes,
+        std::move(probeNodeToBuildNodes),
         probePlan.getLastOperator(),
         std::move(probeNodeToBuildChildOperator)
     );
@@ -139,7 +139,9 @@ void Planner::appendIntersectMultiway(
     for (auto exp: intersect->leftExpressions) {
         auto & plan = probeNodeToBuildPlans[exp];
         appendFlattens(intersect->getGroupsPosToFlattenOnBuildSide(intersect->leftExpressionIdx[exp]), plan);
-        intersect->setChild(intersect->leftExpressionIdx[exp] + 1, plan.getLastOperator());
+        // by the current planner, each hash key ID should already be flatten, so we check that appendFlattens did not work
+        KU_ASSERT(plan.getLastOperator()->getOperatorType() != LogicalOperatorType::FLATTEN);
+        // intersect->setChild(intersect->leftExpressionIdx[exp] + 1, plan.getLastOperator());
     }
     intersect->computeFactorizedSchema();
     probePlan.setLastOperator(std::move(intersect));

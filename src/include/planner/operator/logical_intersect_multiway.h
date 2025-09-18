@@ -20,32 +20,33 @@ public:
         : LogicalOperator{type_, std::move(probeChild)},
           leftToRightExpression{std::move(leftToRightExpression)},
           leftToBuildChildren{std::move(leftToBuildChildren)} {
-        KU_ASSERT(leftToRightExpression.size() == leftToBuildChildren.size());
-        KU_ASSERT(leftToRightExpression.size() >= 2);
-        for (auto [probe_node, build_nodes] : leftToRightExpression) {
+        KU_ASSERT(this->leftToRightExpression.size() == this->leftToBuildChildren.size());
+        KU_ASSERT(this->leftToRightExpression.size() >= 2);
+        for (auto [probe_node, build_nodes] : this->leftToRightExpression) {
             leftExpressions.push_back(probe_node);
-            leftExpressionIdx[probe_node] = leftExpressions.size();
+            leftExpressionIdx[probe_node] = leftExpressions.size() - 1;
             KU_ASSERT(build_nodes.size() >= 2);
-            connectivity.emplace_back(getNumRightNode(), false);
 
-            auto build_child = leftToBuildChildren[probe_node];
+            auto build_child = this->leftToBuildChildren[probe_node];
             // check that each build child has 1 + #probe groups
             auto build_schema = build_child->getSchema();
-            KU_ASSERT(build_schema->getNumGroups() == 1 + build_nodes.size());
-            KU_ASSERT(build_schema->getGroupPos(probe_node->getUniqueName()) == 0);
             KU_ASSERT(build_schema->getGroup(probe_node->getUniqueName())->isFlat());
             for (size_t j = 0; j < build_nodes.size(); j++) {
                 auto& build_node = build_nodes[j];
-                KU_ASSERT(build_schema->getGroupPos(build_node->getUniqueName()) == 1 + j);
                 KU_ASSERT(!build_schema->getGroup(build_node->getUniqueName())->isFlat());
                 KU_ASSERT(!leftToRightExpression.contains(build_node));
                 if (!rightExpressionIdx.contains(build_node)) {
                     rightExpressions.push_back(build_node);
-                    rightExpressionIdx[build_node] = rightExpressions.size();
+                    rightExpressionIdx[build_node] = rightExpressions.size() - 1;
                 }
-                connectivity[leftExpressionIdx[probe_node]][rightExpressionIdx[build_node]] = true;
             }
             children.push_back(build_child);
+        }
+        for (auto [probe_node, build_nodes] : this->leftToRightExpression) {
+            connectivity.emplace_back(getNumRightNode(), false);
+            for (auto build_node: build_nodes) {
+                connectivity[leftExpressionIdx[probe_node]][rightExpressionIdx[build_node]] = true;
+            }
         }
         for (size_t j = 0; j < getNumRightNode(); j++) {
             rightToLeftExpression[rightExpressions[j]] = {};

@@ -1,6 +1,5 @@
 #include <cmath>
 
-#include "common/enums/subquery_type.h"
 #include "main/client_context.h"
 #include "binder/expression_visitor.h"
 #include "binder/query/query_graph_simple.hpp"
@@ -155,7 +154,7 @@ LogicalPlan Planner::planQueryGraph(const QueryGraph& queryGraph,
     if (clientContext->getClientConfig()->enableMultiwayIntersect && info.subqueryType == SubqueryPlanningType::NONE){
         auto plan = planQueryGraphWithMultiwayIntersect(queryGraph, info);
         if(!plan.isEmpty()){
-            return plan;
+            return plan.copy();
         }
     }
     planBaseTableScans(info);
@@ -188,7 +187,7 @@ LogicalPlan Planner::planQueryGraphWithMultiwayIntersect(
     }
     // plan the probe side recursively
     auto [probeGraph, probeInfo] = probeGraphSimple.toQueryGraphAndInfo(queryGraph, info);
-    auto probeGraphPlan = planQueryGraphWithMultiwayIntersect(probeGraph, probeInfo);
+    auto probeGraphPlan = planQueryGraph(probeGraph, probeInfo);
     // plan each build graph by a hint tree
     binder::expression_map<LogicalPlan> probeNodeToBuildGraphPlans;
     binder::expression_map<binder::expression_vector> probeNodeToBuildNodes;
@@ -197,21 +196,21 @@ LogicalPlan Planner::planQueryGraphWithMultiwayIntersect(
         auto [hint_tree, probe_node, build_nodes] = buildGraphSimple.toHintTree(queryGraph);
         buildGraphInfo.hint = hint_tree;
         probeNodeToBuildGraphPlans[probe_node] = planQueryGraph(buildGraph, buildGraphInfo);
-        probeNodeToBuildNodes[probe_node] = build_nodes;
+        probeNodeToBuildNodes[probe_node] = std::move(build_nodes);
     }
     // combine probeGraph and buildGraphs by appendIntersectMultiway
-    appendIntersectMultiway(probeNodeToBuildNodes, probeGraphPlan, probeNodeToBuildGraphPlans);
+    appendIntersectMultiway(std::move(probeNodeToBuildNodes), probeGraphPlan, probeNodeToBuildGraphPlans);
     LogicalPlan finalPlan = probeGraphPlan;
     // plan each remaining graph recursively and hash-joined by the dense subgraph
     for(auto & remainingGraphSimple: remainingGraphsSimple){
         auto [remainingGraph, remainingGraphInfo] = remainingGraphSimple.toQueryGraphAndInfo(queryGraph, info);
-        auto remainingGraphPlan = planQueryGraphWithMultiwayIntersect(remainingGraph, remainingGraphInfo);
+        auto remainingGraphPlan = planQueryGraph(remainingGraph, remainingGraphInfo);
         // find join condition (node intersection)
         expression_vector join_nodes;
         for(auto & join_node: remainingGraphSimple.nodes){
             for(auto & buildGraphSimple: buildGraphsSimple){
                 if(buildGraphSimple.nodes.contains(join_node)){
-                    join_nodes.push_back(queryGraph.getQueryNode(join_node));
+                    join_nodes.push_back(queryGraph.getQueryNode(join_node)->getInternalID());
                     break;
                 }
             }

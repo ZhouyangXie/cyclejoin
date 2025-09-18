@@ -42,7 +42,7 @@ void LogicalIntersectMultiway::computeFactorizedSchema() {
             KU_ASSERT(!group->isFlat());
             for (auto& expression : group->getExpressions()) {
                 if (expression->getUniqueName() != rightNode->getUniqueName()) {
-                    schema->insertToGroupAndScope(expression, outGroupPos);
+                    schema->insertToGroupAndScopeMayRepeat(expression, outGroupPos);
                 }
             }
         }
@@ -52,7 +52,7 @@ void LogicalIntersectMultiway::computeFactorizedSchema() {
 void LogicalIntersectMultiway::computeFlatSchema() {
     schema = children[0]->getSchema()->copy();
     for (auto [rightNode, leftNodes] : rightToLeftExpression) {
-        schema->insertToGroupAndScope(rightNode, 0);
+        schema->insertToGroupAndScopeMayRepeat(rightNode, 0);
         for (auto& leftNode : leftNodes) {
             auto build_schema = leftToBuildChildren[leftNode]->getSchema();
             auto pos = build_schema->getGroupPos(rightNode->getUniqueName());
@@ -60,7 +60,7 @@ void LogicalIntersectMultiway::computeFlatSchema() {
             KU_ASSERT(!group->isFlat());
             for (auto& expression : group->getExpressions()) {
                 if (expression->getUniqueName() != rightNode->getUniqueName()) {
-                    schema->insertToGroupAndScope(expression, 0);
+                    schema->insertToGroupAndScopeMayRepeat(expression, 0);
                 }
             }
         }
