@@ -9,6 +9,7 @@
 #include "planner/operator/logical_filter.h"
 #include "planner/operator/logical_hash_join.h"
 #include "planner/operator/logical_intersect.h"
+#include "planner/operator/logical_intersect_multiway.h"
 #include "planner/operator/logical_node_label_filter.h"
 #include "planner/operator/logical_order_by.h"
 #include "planner/operator/logical_path_property_probe.h"
@@ -148,6 +149,21 @@ void ProjectionPushDownOptimizer::visitIntersect(LogicalOperator* op) {
         }
 
         preAppendProjection(op, childIdx, expressionsAfterPruning);
+    }
+}
+
+void ProjectionPushDownOptimizer::visitIntersectMultiway(LogicalOperator* op){
+    auto & intersect = op->constCast<LogicalIntersectMultiway>();
+    for(auto & left: intersect.leftExpressions){
+        collectExpressionsInUse(left);
+    }
+    for(auto & right: intersect.rightExpressions){
+        collectExpressionsInUse(right);
+    }
+    for(size_t i = 0; i < intersect.leftExpressions.size(); i++){
+        auto build_child = intersect.getChild(i + 1);
+        auto projected = pruneExpressions(build_child->getSchema()->getExpressionsInScope());
+        preAppendProjection(op, i + 1, projected);
     }
 }
 

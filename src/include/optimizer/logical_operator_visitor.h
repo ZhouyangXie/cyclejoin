@@ -93,6 +93,13 @@ protected:
         return op;
     }
 
+    virtual void visitIntersectMultiway(planner::LogicalOperator* /*op*/) {}
+    virtual std::shared_ptr<planner::LogicalOperator> visitIntersectMultiwayReplace(
+        std::shared_ptr<planner::LogicalOperator> op) {
+        return op;
+    }
+
+
     virtual void visitInsert(planner::LogicalOperator* /*op*/) {}
     virtual std::shared_ptr<planner::LogicalOperator> visitInsertReplace(
         std::shared_ptr<planner::LogicalOperator> op) {

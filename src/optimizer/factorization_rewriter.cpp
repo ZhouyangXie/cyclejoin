@@ -9,6 +9,7 @@
 #include "planner/operator/logical_flatten.h"
 #include "planner/operator/logical_hash_join.h"
 #include "planner/operator/logical_intersect.h"
+#include "planner/operator/logical_intersect_multiway.h"
 #include "planner/operator/logical_limit.h"
 #include "planner/operator/logical_order_by.h"
 #include "planner/operator/logical_projection.h"
@@ -58,6 +59,16 @@ void FactorizationRewriter::visitIntersect(planner::LogicalOperator* op) {
         auto childIdx = i + 1; // skip probe
         intersect.setChild(childIdx,
             appendFlattens(intersect.getChild(childIdx), groupPosToFlatten));
+    }
+}
+
+void FactorizationRewriter::visitIntersectMultiway(planner::LogicalOperator* op){
+    auto & intersect = op->cast<LogicalIntersectMultiway>();
+    auto groupsPosToFlattenOnProbeSide = intersect.getGroupsPosToFlattenOnProbeSide();
+    intersect.setChild(0, appendFlattens(intersect.getChild(0), groupsPosToFlattenOnProbeSide));
+    for(size_t i = 0; i < intersect.leftExpressions.size(); i++){
+        auto groupsPosToFlattenOnBuildSide = intersect.getGroupsPosToFlattenOnBuildSide(i);
+        intersect.setChild(i + 1, appendFlattens(intersect.getChild(i + 1), groupsPosToFlattenOnBuildSide));
     }
 }
 

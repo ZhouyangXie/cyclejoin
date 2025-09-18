@@ -15,6 +15,7 @@ public:
 private:
     void visitHashJoin(planner::LogicalOperator* op) override;
     void visitIntersect(planner::LogicalOperator* op) override;
+    void visitIntersectMultiway(planner::LogicalOperator* op) override;
     void visitProjection(planner::LogicalOperator* op) override;
     void visitAccumulate(planner::LogicalOperator* op) override;
     void visitAggregate(planner::LogicalOperator* op) override;

@@ -46,6 +46,9 @@ void LogicalOperatorVisitor::visitOperatorSwitch(LogicalOperator* op) {
     case LogicalOperatorType::INTERSECT: {
         visitIntersect(op);
     } break;
+    case LogicalOperatorType::INTERSECT_MULTIWAY: {
+        visitIntersectMultiway(op);
+    } break;
     case LogicalOperatorType::INSERT: {
         visitInsert(op);
     } break;

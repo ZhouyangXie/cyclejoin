@@ -66,6 +66,8 @@ std::string LogicalOperatorUtils::logicalOperatorTypeToString(LogicalOperatorTyp
         return "INDEX_LOOK_UP";
     case LogicalOperatorType::INTERSECT:
         return "INTERSECT";
+    case LogicalOperatorType::INTERSECT_MULTIWAY:
+        return "INTERSECT_MULTIWAY";
     case LogicalOperatorType::INSERT:
         return "INSERT";
     case LogicalOperatorType::LIMIT:

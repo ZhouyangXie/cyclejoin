@@ -37,6 +37,7 @@ private:
     void visitNodeLabelFilter(planner::LogicalOperator* op) override;
     void visitHashJoin(planner::LogicalOperator* op) override;
     void visitIntersect(planner::LogicalOperator* op) override;
+    void visitIntersectMultiway(planner::LogicalOperator* op) override;
     void visitProjection(planner::LogicalOperator* op) override;
     void visitOrderBy(planner::LogicalOperator* op) override;
     void visitUnwind(planner::LogicalOperator* op) override;
