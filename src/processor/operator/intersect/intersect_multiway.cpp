@@ -51,7 +51,6 @@ void IntersectionLoopState::gotoNext() {
 
 void IntersectMultiway::initLocalStateInternal(ResultSet* resultSet, ExecutionContext* /* context */) {
     probeKeyVectors.clear();
-    loopState = std::make_shared<IntersectionLoopState>(this);
     for (size_t i = 0; i < numLeftNodes(); i++) {
         probeKeyVectors.push_back(resultSet->getValueVector(info->keyDataPos[i]));
     }
@@ -77,6 +76,7 @@ void IntersectMultiway::initLocalStateInternal(ResultSet* resultSet, ExecutionCo
         }
     }
     loopState = std::make_shared<IntersectionLoopState>(this);
+    loopState->finished = true;
 }
 
 
@@ -116,7 +116,7 @@ struct TupleCursor {
     size_t tuple_idx;
     sel_t ele_idx;
     std::vector<overflow_value_t> & tuples;
-    std::vector<std::unique_ptr<common::SelectionVector>> sels;
+    std::vector<std::shared_ptr<common::SelectionVector>> sels;
     bool finished;
 
     explicit TupleCursor(std::vector<overflow_value_t> & tuples): tuples{tuples} {
@@ -124,7 +124,7 @@ struct TupleCursor {
         ele_idx = 0;
         finished = false;
         for(size_t i = 0; i < tuples.size(); i++){
-            sels.push_back(std::make_unique<common::SelectionVector>(tuples[i].numElements));
+            sels.push_back(std::make_shared<common::SelectionVector>(tuples[i].numElements));
             sels.back()->setToFiltered(0);
         }
     }
@@ -161,7 +161,6 @@ struct TupleCursor {
     }
 
     void discardEmptyTuples(){
-        KU_ASSERT(finished);
         KU_ASSERT(tuples.size() == sels.size());
         size_t last_empty = 0;
         for(size_t i = 0; i < tuples.size(); i++){
@@ -247,8 +246,12 @@ bool IntersectMultiway::multiway_intersect_on_sorted_tuples(size_t rightSideNode
     for(size_t i = 0; i < num_probes; i++){
         // do not include tuples that does not have an intersected ID
         cursors[i].discardEmptyTuples();
-        intersectSelVectors[info->right2left_idx[rightSideNodeIdx][i]][i] = std::move(cursors[i].sels);
-        KU_ASSERT(probedIds[info->right2left_idx[rightSideNodeIdx][i]][i].size() == intersectSelVectors[info->right2left_idx[rightSideNodeIdx][i]][i].size());
+        auto leftSideNodeIdx = info->right2left_idx[rightSideNodeIdx][i];
+        intersectSelVectors[leftSideNodeIdx][rightSideNodeIdx] = std::move(cursors[i].sels);
+        for(auto & sel: intersectSelVectors[leftSideNodeIdx][rightSideNodeIdx]){
+            KU_ASSERT(sel != nullptr);
+        }
+        KU_ASSERT(probedIds[leftSideNodeIdx][rightSideNodeIdx].size() == intersectSelVectors[leftSideNodeIdx][rightSideNodeIdx].size());
     }
     return emptyIntersect;
 }
@@ -275,7 +278,7 @@ bool IntersectMultiway::getNextTuplesInternal(ExecutionContext* context){
         if(has_empty){
             continue;
         } else{
-            loopState.reset();
+            loopState->reset();
             break;
         }
     }
@@ -283,13 +286,14 @@ bool IntersectMultiway::getNextTuplesInternal(ExecutionContext* context){
     for(size_t j = 0; j < numRightNodes(); j++){
         // Move the intersection keys in probedIds[loopState->smallesLeftSide[j]][j][] to the output value vector
         auto tuple_to_move = probedIds[loopState->smallesLeftSide[j]][j][loopState->cursorAt(j)];
-        auto & sel = intersectSelVectors[loopState->smallesLeftSide[j]][j][loopState->cursorAt(j)];
+        auto sel = intersectSelVectors[loopState->smallesLeftSide[j]][j][loopState->cursorAt(j)];
+        KU_ASSERT(sel != nullptr);
         memcpy(
             outKeyVectors[j]->getData(),
             tuple_to_move.value,
             tuple_to_move.numElements * sizeof(nodeID_t)
         );
-        outKeyVectors[j]->state->setSelVector(std::shared_ptr<SelectionVector>(std::move(sel)));
+        outKeyVectors[j]->state->setSelVector(sel);
 
         // TODO: it might be more efficient to move as many intersection IDs to outKeyVectors as possible, like Intersect
         // TODO: Populate the payloads

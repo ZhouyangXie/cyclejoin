@@ -57,19 +57,19 @@ struct IntersectMultiwayDataInfo {
           connectivity{std::move(connectivity)}, keyOffsetInTuple{std::move(keyOffsetInTuple)},
           payloadsDataPos{std::move(payloadsDataPos)},
           payloadsColRange{std::move(payloadsColRange)} {
-        size_t numLeftNodes = keyDataPos.size();
+        size_t numLeftNodes = this->keyDataPos.size();
         KU_ASSERT(numLeftNodes >= 2);
-        size_t numRightNodes = outputDataPos.size();
+        size_t numRightNodes = this->outputDataPos.size();
         KU_ASSERT(numRightNodes >= 2);
-        KU_ASSERT(connectivity.size() == numLeftNodes);
-        KU_ASSERT(payloadsDataPos.size() == numLeftNodes);
-        KU_ASSERT(payloadsColRange.size() == numLeftNodes);
-        KU_ASSERT(keyOffsetInTuple.size() == numLeftNodes);
+        KU_ASSERT(this->connectivity.size() == numLeftNodes);
+        KU_ASSERT(this->payloadsDataPos.size() == numLeftNodes);
+        KU_ASSERT(this->payloadsColRange.size() == numLeftNodes);
+        KU_ASSERT(this->keyOffsetInTuple.size() == numLeftNodes);
         for (size_t i = 0; i < numLeftNodes; i++) {
-            auto& i_payloadsDataPos = payloadsDataPos[i];
-            auto& i_payloadsColRange = payloadsColRange[i];
-            auto& i_connectivity = connectivity[i];
-            auto& i_keyOffsetInTuple = keyOffsetInTuple[i];
+            auto& i_payloadsDataPos = this->payloadsDataPos[i];
+            auto& i_payloadsColRange = this->payloadsColRange[i];
+            auto& i_connectivity = this->connectivity[i];
+            auto& i_keyOffsetInTuple = this->keyOffsetInTuple[i];
             KU_ASSERT(i_connectivity.size() == numRightNodes);
             KU_ASSERT(i_payloadsDataPos.size() == numRightNodes);
             KU_ASSERT(i_payloadsColRange.size() == numRightNodes);
@@ -103,7 +103,7 @@ struct IntersectMultiwayDataInfo {
             right2left_idx.emplace_back();
             size_t j_non_empty_count = 0;
             for (size_t i = 0; i < numLeftNodes; i++) {
-                if (connectivity[i][j]) {
+                if (this->connectivity[i][j]) {
                     right2left_idx[j].push_back(i);
                     j_non_empty_count++;
                 }
@@ -127,11 +127,11 @@ public:
         std::unique_ptr<OPPrintInfo> printInfo)
         : PhysicalOperator{type_, std::move(probeChild), id, std::move(printInfo)},
           info{std::move(intersectDataInfo)}, sharedHTs{std::move(sharedHTs)} {
-        KU_ASSERT(probeChild->getOperatorType() == PhysicalOperatorType::FLATTEN);
-        KU_ASSERT(sharedHTs.size() == numLeftNodes());
+        KU_ASSERT(children[0]->getOperatorType() == PhysicalOperatorType::FLATTEN);
+        KU_ASSERT(this->sharedHTs.size() == numLeftNodes());
         // TODO: check that the number of columns, flatness of each sharedHT is correct
         for (size_t i = 0; i < numLeftNodes(); i++) {
-            auto ht_schema = sharedHTs[i]->getHashTable()->getTableSchema();
+            auto ht_schema = this->sharedHTs[i]->getHashTable()->getTableSchema();
             // TODO: currently not considering other payload attributes
             KU_ASSERT(ht_schema->getNumColumns() == info->left2right_idx.size() + 3);
             KU_ASSERT(ht_schema->getColumn(0)->isFlat());
@@ -177,7 +177,7 @@ private:
     // number of probed tuples
     std::vector<std::vector<std::vector<common::overflow_value_t>>> probedIds;
     // sel vectors on each of probedIds
-    std::vector<std::vector<std::vector<std::unique_ptr<common::SelectionVector>>>>
+    std::vector<std::vector<std::vector<std::shared_ptr<common::SelectionVector>>>>
         intersectSelVectors;
 
     // this operator outputs the Cartesian product of intersections
@@ -193,7 +193,7 @@ struct IntersectionLoopState {
     bool finished;
     std::vector<size_t> smallesLeftSide;
 
-    explicit IntersectionLoopState(IntersectMultiway* op) : op{op}, finished{false} {
+    explicit IntersectionLoopState(IntersectMultiway* op) : op{op}, finished{true} {
         tuple_cursors.resize(op->numRightNodes(), 0);
         smallesLeftSide.resize(op->numRightNodes(), 0);
         // Choose the one with least number of tuples to iterate

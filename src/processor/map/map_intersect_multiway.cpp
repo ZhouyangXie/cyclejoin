@@ -47,7 +47,11 @@ std::unique_ptr<PhysicalOperator> PlanMapper::mapIntersectMultiway(
         binder::expression_vector payloadExpressions;
         binder::expression_map<size_t> payloadColumnIdx;
         size_t col_idx = 1;
-        for (auto exp : buildSchema->getExpressionsInScope()) {
+        for (auto exp: op->leftToRightExpression.at(leftNode)) {
+        // for (auto exp : buildSchema->getExpressionsInScope()) {
+            // TODO: getExpressionsInScope is not ordered
+            // payloadExpressions should be constructed in a certain order
+            KU_ASSERT(buildSchema->isExpressionInScope(*exp));
             if (exp->getUniqueName() == leftNode->getUniqueName()) {
                 continue;
             }
@@ -55,6 +59,8 @@ std::unique_ptr<PhysicalOperator> PlanMapper::mapIntersectMultiway(
             payloadColumnIdx[exp] = col_idx;
             col_idx++;
         }
+        // because we currently do not support payloads in HT, check that only probeKey and intersectKey are present
+        KU_ASSERT(payloadExpressions.size() == op->leftToRightExpression.at(leftNode).size());
         // init the HT
         binder::expression_vector keys = {leftNode};
         auto buildInfo = createHashBuildInfo(*buildSchema, keys, payloadExpressions);
