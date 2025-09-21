@@ -84,7 +84,9 @@ bool IntersectMultiway::probeHTs() {
     hash_t hashVal = 0;
     for (size_t i = 0; i < numLeftNodes(); i++) {
         KU_ASSERT(probeKeyVectors[i]->state->isFlat());
-        probedIds[i].clear();
+        for(size_t j = 0; j < numRightNodes(); j++){
+            probedIds[i][j].clear();
+        }
         if (sharedHTs[i] -> getHashTable() -> getNumEntries() == 0) {
             continue;
         }
@@ -103,6 +105,13 @@ bool IntersectMultiway::probeHTs() {
                 }
             }
             flatTuple = *sharedHTs[i]->getHashTable()->getPrevTuple(flatTuple);
+        }
+        // reverse the tuple vector because this is how they are ordered
+        for(auto j: info->left2right_idx[i]){
+            size_t num_tuples = probedIds[i][j].size();
+            for(auto k = 0u; k < num_tuples/2; k++ ){
+                std::swap(probedIds[i][j][k], probedIds[i][j][num_tuples - 1 - k]);
+            }
         }
         if(!has_match){
             return false;
@@ -304,6 +313,20 @@ bool IntersectMultiway::getNextTuplesInternal(ExecutionContext* context){
     return true;
 }
 
+std::string nodeIdArrayToString(overflow_value_t tuple) {
+    if(tuple.value == nullptr){
+        return "(uninitialized)";
+    }
+    else{
+        std::string s = "(size=" + std::to_string(tuple.numElements) + "){";
+        for(size_t i = 0; i < tuple.numElements; i++){
+            auto node_id = ((nodeID_t*)(tuple.value + i * sizeof(nodeID_t)));
+            s += "(" + std::to_string(node_id->tableID) + "," + std::to_string(node_id->offset) + ")" + ",";
+        }
+        s += "}";
+        return s;
+    }
+}
 
 } // namespace processor
 } // namespace kuzu

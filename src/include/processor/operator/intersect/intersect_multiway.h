@@ -221,6 +221,8 @@ struct IntersectionLoopState {
     size_t cursorAt(size_t j) const { return tuple_cursors[j]; }
 };
 
+std::string nodeIdArrayToString(common::overflow_value_t tuple);
+
 } // namespace processor
 
 } // namespace kuzu
