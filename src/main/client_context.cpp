@@ -547,7 +547,6 @@ std::unique_ptr<QueryResult> ClientContext::executeNoLock(PreparedStatement* pre
     this->resetActiveQuery();
     this->startTimer();
     auto executingTimer = TimeMetric(true /* enable */);
-    executingTimer.start();
     std::shared_ptr<FactorizedTable> resultFT;
     try {
         bool isTransactionStatement =
@@ -565,6 +564,7 @@ std::unique_ptr<QueryResult> ClientContext::executeNoLock(PreparedStatement* pre
                 auto mapper = PlanMapper(executionContext.get());
                 const auto physicalPlan = mapper.mapLogicalPlanToPhysical(
                     cachedStatement->logicalPlan.get(), cachedStatement->columns);
+                executingTimer.start();
                 if (isTransactionStatement) {
                     resultFT = localDatabase->queryProcessor->execute(physicalPlan.get(),
                         executionContext.get());
@@ -576,6 +576,7 @@ std::unique_ptr<QueryResult> ClientContext::executeNoLock(PreparedStatement* pre
                     resultFT = localDatabase->queryProcessor->execute(physicalPlan.get(),
                         executionContext.get());
                 }
+                executingTimer.stop();
             },
             preparedStatement->isReadOnly(), isTransactionStatement,
             TransactionHelper::getAction(true /*shouldCommitNewTransaction*/,
@@ -586,7 +587,6 @@ std::unique_ptr<QueryResult> ClientContext::executeNoLock(PreparedStatement* pre
     }
     const auto memoryManager = storage::MemoryManager::Get(*this);
     memoryManager->getBufferManager()->getSpillerOrSkip([](auto& spiller) { spiller.clearFile(); });
-    executingTimer.stop();
     auto columnNames = cachedStatement->getColumnNames();
     auto columnTypes = cachedStatement->getColumnTypes();
     std::unique_ptr<QueryResult> result;
