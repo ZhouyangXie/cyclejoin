@@ -292,6 +292,7 @@ bool IntersectMultiway::getNextTuplesInternal(ExecutionContext* context){
         }
     }
 
+    size_t num_output_tuples = 1;
     for(size_t j = 0; j < numRightNodes(); j++){
         // Move the intersection keys in probedIds[loopState->smallesLeftSide[j]][j][] to the output value vector
         auto tuple_to_move = probedIds[loopState->smallesLeftSide[j]][j][loopState->cursorAt(j)];
@@ -303,6 +304,7 @@ bool IntersectMultiway::getNextTuplesInternal(ExecutionContext* context){
             tuple_to_move.numElements * sizeof(nodeID_t)
         );
         outKeyVectors[j]->state->setSelVector(sel);
+        num_output_tuples *= sel->getSelSize();
 
         // TODO: it might be more efficient to move as many intersection IDs to outKeyVectors as possible, like Intersect
         // TODO: Populate the payloads
@@ -310,6 +312,7 @@ bool IntersectMultiway::getNextTuplesInternal(ExecutionContext* context){
 
     // move forward the cursor
     loopState->gotoNext();
+    metrics->numOutputTuple.increase(num_output_tuples);
     return true;
 }
 
