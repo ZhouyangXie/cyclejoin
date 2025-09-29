@@ -79,9 +79,14 @@ public:
     bool getNextTuplesInternal(ExecutionContext* context) override;
 
     std::unique_ptr<PhysicalOperator> copy() override {
-        return make_unique<HashJoinProbe>(sharedState, joinType, flatProbe, probeDataInfo,
+        auto p = make_unique<HashJoinProbe>(sharedState, joinType, flatProbe, probeDataInfo,
             children[0]->copy(), id, printInfo->copy());
+        p->allowEmptyJoinResult = allowEmptyJoinResult;
+        return p;
     }
+
+    bool getAllowEmptyJoinResult() const { return allowEmptyJoinResult; }
+    void setAllowEmptyJoinResult() { allowEmptyJoinResult = true; }
 
 private:
     bool getMatchedTuples(ExecutionContext* context) {
@@ -117,6 +122,8 @@ private:
     std::unique_ptr<common::ValueVector> hashVector;
     std::unique_ptr<common::ValueVector> tmpHashVector;
     common::SelectionVector hashSelVec;
+
+    bool allowEmptyJoinResult = false;
 };
 
 } // namespace processor

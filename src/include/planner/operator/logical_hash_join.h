@@ -58,11 +58,16 @@ public:
 
     static bool isNodeIDOnlyJoin(const std::vector<join_condition_t>& joinConditions);
 
+    void setAllowEmptyJoinResult() {allowEmptyJoinResult = true; }
+    bool getAllowEmptyJoinResult() const { return allowEmptyJoinResult; }
+
 private:
     std::vector<join_condition_t> joinConditions;
     common::JoinType joinType;
     std::shared_ptr<binder::Expression> mark; // when joinType is Mark or Left
     SIPInfo sipInfo;
+
+    bool allowEmptyJoinResult = false;
 };
 
 } // namespace planner

@@ -206,7 +206,7 @@ bool HashJoinProbe::getNextTuplesInternal(ExecutionContext* context) {
             return false;
         }
         numPopulatedTuples = getJoinResult();
-    } while (numPopulatedTuples == 0);
+    } while (numPopulatedTuples == 0 && !allowEmptyJoinResult);
     metrics->numOutputTuple.increase(numPopulatedTuples);
     return true;
 }
