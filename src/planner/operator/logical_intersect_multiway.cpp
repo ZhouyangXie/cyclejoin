@@ -34,7 +34,7 @@ void LogicalIntersectMultiway::computeFactorizedSchema() {
     schema = children[0]->getSchema()->copy();
     for (auto [rightNode, leftNodes] : rightToLeftExpression) {
         auto outGroupPos = schema->createGroup();
-        schema->insertToGroupAndScope(rightNode, outGroupPos);
+        schema->insertToGroupAndScopeMayRepeat(rightNode, outGroupPos);
         for (auto leftNode : leftNodes) {
             auto build_schema = leftToBuildChildren[leftNode]->getSchema();
             auto pos = build_schema->getGroupPos(rightNode->getUniqueName());

@@ -11,7 +11,7 @@ using namespace kuzu::common;
 namespace kuzu {
 namespace processor {
 
-std::string  IntersecMultiwaytPrintInfo::toString() const{
+std::string IntersecMultiwaytPrintInfo::toString() const{
     std::string s = "";
     for(size_t i = 0; i < left_nodes.size(); i++){
         s += ("(" + std::to_string(i) + ")->{");
@@ -122,11 +122,14 @@ bool IntersectMultiway::probeHTs() {
 
 
 struct TupleCursor {
+private:
     size_t tuple_idx;
     sel_t ele_idx;
     std::vector<overflow_value_t> & tuples;
-    std::vector<std::shared_ptr<common::SelectionVector>> sels;
     bool finished;
+
+public:
+    std::vector<std::shared_ptr<common::SelectionVector>> sels;
 
     explicit TupleCursor(std::vector<overflow_value_t> & tuples): tuples{tuples} {
         tuple_idx = 0;
@@ -146,13 +149,17 @@ struct TupleCursor {
 
     void gotoNext(){
         KU_ASSERT(!finished);
-        if(ele_idx < tuples[tuple_idx].numElements - 1){
+        if(ele_idx + 1 < tuples[tuple_idx].numElements){
             ele_idx++;
-        } else if (tuple_idx < tuples.size() - 1){
-            tuple_idx++;
-            ele_idx = 0;
         } else {
-            finished = true;
+            do {
+                tuple_idx++;
+                if(tuple_idx + 1 >= tuples.size()){
+                    finished = true;
+                    break;
+                }
+            } while(tuples[tuple_idx].numElements == 0);
+            ele_idx = 0;
         }
     }
 
