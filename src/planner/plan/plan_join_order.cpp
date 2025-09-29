@@ -1,4 +1,5 @@
 #include <cmath>
+#include <memory>
 
 #include "main/client_context.h"
 #include "binder/expression_visitor.h"
@@ -9,6 +10,9 @@
 #include "planner/join_order/cost_model.h"
 #include "planner/join_order/join_plan_solver.h"
 #include "planner/join_order/join_tree_constructor.h"
+#include "planner/operator/extend/logical_extend.h"
+#include "planner/operator/extend/logical_shared_extend.h"
+#include "planner/operator/logical_hash_join.h"
 #include "planner/operator/scan/logical_scan_node_table.h"
 #include "planner/planner.h"
 
@@ -177,6 +181,72 @@ LogicalPlan Planner::planQueryGraph(const QueryGraph& queryGraph,
     return bestPlan;
 }
 
+static bool replaceWithSharedExtend(LogicalPlan & plan){
+    // go to the left child till the first extend
+    std::shared_ptr<LogicalOperator> root = plan.getLastOperator();
+    while(root->getChild(0)->getOperatorType() != LogicalOperatorType::EXTEND){
+        root = root->getChild(0);
+        if(root->getNumChildren() == 0){
+            return false;
+        }
+    }
+    // remove extends from the plan and collect them
+    std::vector<std::shared_ptr<LogicalOperator>> extends;
+    auto cursor = root;
+    std::shared_ptr<LogicalOperator> insert_node = nullptr;
+    while(cursor->getNumChildren() > 0){
+        auto child = cursor->getChild(0);
+        if(child->getOperatorType() == LogicalOperatorType::EXTEND){
+            extends.push_back(child);
+            insert_node = cursor;
+            cursor->setChild(0, child->getChild(0));
+        } else{
+            cursor = cursor->getChild(0);
+        }
+    }
+    KU_ASSERT(insert_node != nullptr);
+    KU_ASSERT(extends.size() > 1);
+    // make a shared extend operator
+    std::shared_ptr<binder::NodeExpression> boundNode = nullptr;
+    std::vector<std::shared_ptr<binder::NodeExpression>> nbrNodes;
+    std::vector<std::shared_ptr<binder::RelExpression>> rels;
+    std::vector<common::ExtendDirection> directions;
+    std::vector<binder::expression_vector> properties;
+    for(auto & op: extends){
+        const LogicalExtend * extend = op.get()->constPtrCast<LogicalExtend>();
+        if(boundNode == nullptr){
+            boundNode = extend->getBoundNode();
+        } else{
+            KU_ASSERT(boundNode->getUniqueName() == extend->getBoundNode()->getUniqueName());
+        }
+        nbrNodes.push_back(extend->getNbrNode());
+        rels.push_back(extend->getRel());
+        directions.push_back(extend->getDirection());
+        properties.push_back(extend->getProperties());
+    }
+    auto sharedExtend = std::make_shared<LogicalSharedExtend>(
+        boundNode, nbrNodes, rels, directions, properties, insert_node->getChild(0)
+    );
+    // insert it
+    insert_node->setChild(0, sharedExtend);
+    return true;
+}
+
+static bool allowEmptyHashProbeResult(LogicalPlan & plan){
+    auto root = plan.getLastOperator();
+    do{
+        if(root->getOperatorType() == LogicalOperatorType::HASH_JOIN){
+            root->ptrCast<LogicalHashJoin>()->setAllowEmptyJoinResult();
+        }
+        if(root->getNumChildren() > 0){
+            root = root->getChild(0);
+        } else {
+            break;
+        }
+    } while(true);
+    return true;
+}
+
 LogicalPlan Planner::planQueryGraphWithMultiwayIntersect(
     const QueryGraph& queryGraph,
     const QueryGraphPlanningInfo& info) {
@@ -196,6 +266,10 @@ LogicalPlan Planner::planQueryGraphWithMultiwayIntersect(
         auto [hint_tree, probe_node, build_nodes] = buildGraphSimple.toHintTree(queryGraph);
         buildGraphInfo.hint = hint_tree;
         probeNodeToBuildGraphPlans[probe_node] = planQueryGraph(buildGraph, buildGraphInfo);
+        bool successful = replaceWithSharedExtend(probeNodeToBuildGraphPlans[probe_node]);
+        KU_ASSERT(successful);
+        successful = allowEmptyHashProbeResult(probeNodeToBuildGraphPlans[probe_node]);
+        KU_ASSERT(successful);
         probeNodeToBuildNodes[probe_node] = std::move(build_nodes);
     }
     // combine probeGraph and buildGraphs by appendIntersectMultiway
@@ -215,8 +289,8 @@ LogicalPlan Planner::planQueryGraphWithMultiwayIntersect(
                 }
             }
         }
-        // combine the remaining by hash join (bigger graph as the build side)
-        appendHashJoin(join_nodes, JoinType::INNER, remainingGraphPlan, finalPlan, finalPlan);
+        // combine the remaining by hash join (bigger graph as the probe side)
+        appendHashJoin(join_nodes, JoinType::INNER, finalPlan, remainingGraphPlan , finalPlan);
     }
     return finalPlan;
 }
