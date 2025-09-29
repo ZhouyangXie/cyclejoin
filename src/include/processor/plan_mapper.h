@@ -151,6 +151,8 @@ public:
         const planner::LogicalOperator* logicalOperator);
     std::unique_ptr<PhysicalOperator> mapSetRelProperty(
         const planner::LogicalOperator* logicalOperator);
+    std::unique_ptr<PhysicalOperator> mapSharedExtend(
+        const planner::LogicalOperator* logicalOperator);
     std::unique_ptr<PhysicalOperator> mapStandaloneCall(
         const planner::LogicalOperator* logicalOperator);
     std::unique_ptr<PhysicalOperator> mapTableFunctionCall(

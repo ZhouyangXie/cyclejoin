@@ -4,6 +4,7 @@
 #include "function/gds/gds_function_collection.h"
 #include "function/gds/rec_joins.h"
 #include "planner/operator/extend/logical_extend.h"
+#include "planner/operator/extend/logical_shared_extend.h"
 #include "planner/operator/extend/logical_recursive_extend.h"
 #include "planner/operator/logical_accumulate.h"
 #include "planner/operator/logical_filter.h"
@@ -76,6 +77,16 @@ void ProjectionPushDownOptimizer::visitExtend(LogicalOperator* op) {
     collectExpressionsInUse(boundNodeID);
     const auto nbrNodeID = extend.getNbrNode()->getInternalID();
     extend.setScanNbrID(propertiesInUse.contains(nbrNodeID));
+}
+
+void ProjectionPushDownOptimizer::visitSharedExtend(LogicalOperator * op) {
+    auto& extend = op->cast<LogicalSharedExtend>();
+    const auto boundNodeID = extend.getBoundNode()->getInternalID();
+    collectExpressionsInUse(boundNodeID);
+    for(size_t i = 0; i < extend.getNumberOfSharing(); i++){
+        const auto nbrNodeID = extend.getNbrNode(i)->getInternalID();
+        extend.setScanNbrID(i, propertiesInUse.contains(nbrNodeID));
+    }
 }
 
 void ProjectionPushDownOptimizer::visitAccumulate(LogicalOperator* op) {

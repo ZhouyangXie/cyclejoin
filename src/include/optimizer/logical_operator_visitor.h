@@ -160,6 +160,12 @@ protected:
         return op;
     }
 
+    virtual void visitSharedExtend(planner::LogicalOperator* /*op*/) {}
+    virtual std::shared_ptr<planner::LogicalOperator> visitSharedExtendReplace(
+        std::shared_ptr<planner::LogicalOperator> op) {
+        return op;
+    }
+
     virtual void visitTableFunctionCall(planner::LogicalOperator*) {}
     virtual std::shared_ptr<planner::LogicalOperator> visitTableFunctionCallReplace(
         std::shared_ptr<planner::LogicalOperator> op) {

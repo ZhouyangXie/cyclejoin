@@ -79,6 +79,9 @@ void LogicalOperatorVisitor::visitOperatorSwitch(LogicalOperator* op) {
     case LogicalOperatorType::SET_PROPERTY: {
         visitSetProperty(op);
     } break;
+    case LogicalOperatorType::SHARED_EXTEND: {
+        visitSharedExtend(op);
+    } break;
     case LogicalOperatorType::TABLE_FUNCTION_CALL: {
         visitTableFunctionCall(op);
     } break;

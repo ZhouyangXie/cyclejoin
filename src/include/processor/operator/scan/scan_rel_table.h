@@ -24,7 +24,6 @@ struct ScanRelTableInfo : ScanTableInfo {
     void initScanState(storage::TableScanState& scanState,
         const std::vector<common::ValueVector*>& outVectors, main::ClientContext* context) override;
 
-private:
     ScanRelTableInfo(const ScanRelTableInfo& other)
         : ScanTableInfo{other}, direction{other.direction} {}
 };
@@ -52,7 +51,6 @@ struct ScanRelTablePrintInfo final : OPPrintInfo {
         return std::unique_ptr<ScanRelTablePrintInfo>(new ScanRelTablePrintInfo(*this));
     }
 
-private:
     ScanRelTablePrintInfo(const ScanRelTablePrintInfo& other)
         : OPPrintInfo{other}, tableNames{other.tableNames}, properties{other.properties},
           boundNode{other.boundNode}, rel{other.rel}, nbrNode{other.nbrNode},

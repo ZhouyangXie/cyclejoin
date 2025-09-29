@@ -170,6 +170,9 @@ std::unique_ptr<PhysicalOperator> PlanMapper::mapOperator(const LogicalOperator*
     case LogicalOperatorType::SET_PROPERTY: {
         physicalOperator = mapSetProperty(logicalOperator);
     } break;
+    case LogicalOperatorType::SHARED_EXTEND: {
+        physicalOperator = mapSharedExtend(logicalOperator);
+    } break;
     case LogicalOperatorType::STANDALONE_CALL: {
         physicalOperator = mapStandaloneCall(logicalOperator);
     } break;

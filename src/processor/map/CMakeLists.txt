@@ -40,6 +40,7 @@ add_library(kuzu_processor_mapper
         map_scan_node_table.cpp
         map_semi_masker.cpp
         map_set.cpp
+        map_shared_extend.cpp
         map_simple.cpp
         map_transaction.cpp
         map_union.cpp

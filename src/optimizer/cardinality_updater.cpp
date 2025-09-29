@@ -3,6 +3,7 @@
 #include "binder/expression/expression_util.h"
 #include "planner/join_order/cardinality_estimator.h"
 #include "planner/operator/extend/logical_extend.h"
+#include "planner/operator/extend/logical_shared_extend.h"
 #include "planner/operator/logical_aggregate.h"
 #include "planner/operator/logical_filter.h"
 #include "planner/operator/logical_flatten.h"
@@ -31,6 +32,10 @@ void CardinalityUpdater::visitOperatorSwitchWithDefault(planner::LogicalOperator
     }
     case planner::LogicalOperatorType::EXTEND: {
         visitExtend(op);
+        break;
+    }
+    case planner::LogicalOperatorType::SHARED_EXTEND: {
+        visitSharedExtend(op);
         break;
     }
     case planner::LogicalOperatorType::HASH_JOIN: {
@@ -85,6 +90,18 @@ void CardinalityUpdater::visitExtend(planner::LogicalOperator* op) {
         *extend.getBoundNode(), transaction);
     extend.setCardinality(
         cardinalityEstimator.multiply(extensionRate, op->getChild(0)->getCardinality()));
+}
+
+void CardinalityUpdater::visitSharedExtend(planner::LogicalOperator* op) {
+    KU_ASSERT(transaction);
+    auto& extend = op->cast<planner::LogicalSharedExtend&>();
+    common::cardinality_t sum = 0;
+    for(size_t i = 0; i < extend.getNumberOfSharing(); i++){
+        const auto extensionRate = cardinalityEstimator.getExtensionRate(*extend.getRel(i),
+            *extend.getBoundNode(), transaction);
+        sum += cardinalityEstimator.multiply(extensionRate, op->getChild(0)->getCardinality());
+    }
+    extend.setCardinality(sum);
 }
 
 void CardinalityUpdater::visitHashJoin(planner::LogicalOperator* op) {

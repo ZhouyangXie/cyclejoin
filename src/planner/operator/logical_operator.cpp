@@ -96,6 +96,8 @@ std::string LogicalOperatorUtils::logicalOperatorTypeToString(LogicalOperatorTyp
         return "SEMI_MASKER";
     case LogicalOperatorType::SET_PROPERTY:
         return "SET_PROPERTY";
+    case LogicalOperatorType::SHARED_EXTEND:
+        return "SHARED_EXTEND";
     case LogicalOperatorType::STANDALONE_CALL:
         return "STANDALONE_CALL";
     case LogicalOperatorType::TABLE_FUNCTION_CALL:

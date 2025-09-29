@@ -59,6 +59,7 @@ enum class PhysicalOperatorType : uint8_t {
     RESULT_COLLECTOR,
     SCAN_NODE_TABLE,
     SCAN_REL_TABLE,
+    SHARED_SCAN_REL_TABLE,
     SEMI_MASKER,
     SET_PROPERTY,
     SKIP,

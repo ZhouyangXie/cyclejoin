@@ -103,6 +103,8 @@ std::string PhysicalOperatorUtils::operatorTypeToString(PhysicalOperatorType ope
         return "SEMI_MASKER";
     case PhysicalOperatorType::SET_PROPERTY:
         return "SET_PROPERTY";
+    case PhysicalOperatorType::SHARED_SCAN_REL_TABLE:
+        return "SHARED_SCAN_REL_TABLE";
     case PhysicalOperatorType::SKIP:
         return "SKIP";
     case PhysicalOperatorType::STANDALONE_CALL:

@@ -55,6 +55,7 @@ enum class LogicalOperatorType : uint8_t {
     SCAN_NODE_TABLE,
     SEMI_MASKER,
     SET_PROPERTY,
+    SHARED_EXTEND,
     STANDALONE_CALL,
     TABLE_FUNCTION_CALL,
     TRANSACTION,

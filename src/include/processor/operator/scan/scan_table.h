@@ -17,7 +17,6 @@ struct ScanOpInfo {
         : nodeIDPos{nodeIDPos}, outVectorsPos{std::move(outVectorsPos)} {}
     EXPLICIT_COPY_DEFAULT_MOVE(ScanOpInfo);
 
-private:
     ScanOpInfo(const ScanOpInfo& other)
         : nodeIDPos{other.nodeIDPos}, outVectorsPos{other.outVectorsPos} {}
 };
