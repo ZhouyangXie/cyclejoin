@@ -207,6 +207,11 @@ bool HashJoinProbe::getNextTuplesInternal(ExecutionContext* context) {
         }
         numPopulatedTuples = getJoinResult();
     } while (numPopulatedTuples == 0 && !allowEmptyJoinResult);
+    if(numPopulatedTuples == 0 && allowEmptyJoinResult){
+        for(auto v: keyVectors){
+            v->getSelVectorPtr()->setSelSize(0);
+        }
+    }
     metrics->numOutputTuple.increase(numPopulatedTuples);
     return true;
 }

@@ -101,7 +101,11 @@ bool IntersectMultiway::probeHTs() {
                 has_match = true;
                 for(auto j: info->left2right_idx[i]){
                     // TODO: check that all intersect keys are store in unflat columns
-                    probedIds[i][j].push_back(*(overflow_value_t*)(flatTuple + info->keyOffsetInTuple[i][j]));
+                    overflow_value_t * p_tuple = (overflow_value_t*)(flatTuple + info->keyOffsetInTuple[i][j]);
+                    if(p_tuple->numElements == 0){
+                        continue;
+                    }
+                    probedIds[i][j].push_back(*p_tuple);
                 }
             }
             flatTuple = *sharedHTs[i]->getHashTable()->getPrevTuple(flatTuple);
@@ -109,6 +113,9 @@ bool IntersectMultiway::probeHTs() {
         // reverse the tuple vector because this is how they are ordered
         for(auto j: info->left2right_idx[i]){
             size_t num_tuples = probedIds[i][j].size();
+            if(num_tuples == 0){
+                return false;
+            }
             for(auto k = 0u; k < num_tuples/2; k++ ){
                 std::swap(probedIds[i][j][k], probedIds[i][j][num_tuples - 1 - k]);
             }
@@ -137,6 +144,7 @@ public:
         finished = false;
         for(size_t i = 0; i < tuples.size(); i++){
             sels.push_back(std::make_shared<common::SelectionVector>(tuples[i].numElements));
+            KU_ASSERT(tuples[i].numElements > 0);
             sels.back()->setToFiltered(0);
         }
     }
@@ -199,6 +207,7 @@ bool IntersectMultiway::multiway_intersect_on_sorted_tuples(size_t rightSideNode
     std::vector<TupleCursor> cursors;
     for(size_t i = 0; i < num_probes; i++){
         cursors.emplace_back(probedIds[info->right2left_idx[rightSideNodeIdx][i]][rightSideNodeIdx]);
+        KU_ASSERT(cursors.back().sels.size() > 0);
     }
     nodeID_t target = cursors[0].getCurrentID();
     bool emptyIntersect = true;
