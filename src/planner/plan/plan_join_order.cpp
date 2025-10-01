@@ -277,6 +277,10 @@ LogicalPlan Planner::planQueryGraphWithMultiwayIntersect(
     LogicalPlan finalPlan = probeGraphPlan;
     // plan each remaining graph recursively and hash-joined by the dense subgraph
     for(auto & remainingGraphSimple: remainingGraphsSimple){
+        if(remainingGraphSimple.nodes.size() <= 1){
+            // the node's label will be filtered in the building of the shared HT
+            continue;
+        }
         auto [remainingGraph, remainingGraphInfo] = remainingGraphSimple.toQueryGraphAndInfo(queryGraph, info);
         auto remainingGraphPlan = planQueryGraph(remainingGraph, remainingGraphInfo);
         // find join condition (node intersection)

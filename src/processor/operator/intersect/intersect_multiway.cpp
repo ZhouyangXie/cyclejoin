@@ -162,7 +162,7 @@ public:
         } else {
             do {
                 tuple_idx++;
-                if(tuple_idx + 1 >= tuples.size()){
+                if(tuple_idx + 1 > tuples.size()){
                     finished = true;
                     break;
                 }
@@ -319,7 +319,13 @@ bool IntersectMultiway::getNextTuplesInternal(ExecutionContext* context){
             tuple_to_move.value,
             tuple_to_move.numElements * sizeof(nodeID_t)
         );
-        outKeyVectors[j]->state->setSelVector(sel);
+        // copy sel vector
+        outKeyVectors[j]->getSelVectorPtr()->setRange(0, sel->getSelSize());
+        memcpy(
+            outKeyVectors[j]->getSelVectorPtr()->getMutableBuffer().data(),
+            sel->getMutableBuffer().data(),
+            sel->getSelSize() * sizeof(sel_t)
+        );
         num_output_tuples *= sel->getSelSize();
 
         // TODO: it might be more efficient to move as many intersection IDs to outKeyVectors as possible, like Intersect
