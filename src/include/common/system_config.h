@@ -18,7 +18,7 @@
 namespace kuzu {
 namespace common {
 
-#define VECTOR_CAPACITY_LOG_2 5
+#define VECTOR_CAPACITY_LOG_2 11
 #if VECTOR_CAPACITY_LOG_2 > 12
 #error "Vector capacity log2 should be less than or equal to 12"
 #endif
