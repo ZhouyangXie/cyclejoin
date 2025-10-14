@@ -175,26 +175,6 @@ uint64_t HashJoinProbe::getMarkJoinResult() {
     return 1;
 }
 
-bool HashJoinProbe::getNextTupleConditional(ExecutionContext* context, uint64_t condition_){
-    if(condition_ != this->condition){
-        return true;
-    }
-    uint64_t numPopulatedTuples = 0;
-    do {
-        if (!getMatchedTuples(context)) {
-            return false;
-        }
-        numPopulatedTuples = getJoinResult();
-    } while (numPopulatedTuples == 0 && !allowEmptyJoinResult);
-    if(numPopulatedTuples == 0 && allowEmptyJoinResult){
-        for(auto v: keyVectors){
-            v->getSelVectorPtr()->setSelSize(0);
-        }
-    }
-    metrics->numOutputTuple.increase(numPopulatedTuples);
-    return true;
-}
-
 uint64_t HashJoinProbe::getJoinResult() {
     switch (joinType) {
     case JoinType::LEFT: {
@@ -226,7 +206,12 @@ bool HashJoinProbe::getNextTuplesInternal(ExecutionContext* context) {
             return false;
         }
         numPopulatedTuples = getJoinResult();
-    } while (numPopulatedTuples == 0);
+    } while (numPopulatedTuples == 0 && !allowEmptyJoinResult);
+    if(numPopulatedTuples == 0 && allowEmptyJoinResult){
+        for(auto v: keyVectors){
+            v->getSelVectorPtr()->setSelSize(0);
+        }
+    }
     metrics->numOutputTuple.increase(numPopulatedTuples);
     return true;
 }

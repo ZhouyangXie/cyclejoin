@@ -107,8 +107,6 @@ private:
     uint64_t getCountJoinResult();
     uint64_t getJoinResult();
 
-    bool getNextTupleConditional(ExecutionContext* context, uint64_t condition_) override;
-
 private:
     std::shared_ptr<HashJoinSharedState> sharedState;
     common::JoinType joinType;
@@ -126,7 +124,6 @@ private:
     common::SelectionVector hashSelVec;
 
     bool allowEmptyJoinResult = false;
-    uint64_t condition = -1u;
 };
 
 } // namespace processor

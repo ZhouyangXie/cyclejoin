@@ -131,9 +131,6 @@ public:
 
     bool getNextTuple(ExecutionContext* context);
 
-    // A function called during shared HT building
-    virtual bool getNextTupleConditional(ExecutionContext * context, uint64_t) {return getNextTuple(context);}
-
     virtual void finalize(ExecutionContext* context);
 
     std::unordered_map<std::string, std::string> getProfilerKeyValAttributes(
