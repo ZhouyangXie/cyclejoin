@@ -71,6 +71,8 @@ std::string PhysicalOperatorUtils::operatorTypeToString(PhysicalOperatorType ope
         return "INTERSECT";
     case PhysicalOperatorType::INTERSECT_MULTIWAY:
         return "INTERSECT_MULTIWAY";
+    case PhysicalOperatorType::INTERSECT_MULTIWAY_BUILD:
+        return "INTERSECT_MULTIWAY_BUILD";
     case PhysicalOperatorType::INSTALL_EXTENSION:
         return "INSTALL_EXTENSION";
     case PhysicalOperatorType::LIMIT:

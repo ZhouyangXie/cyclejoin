@@ -4,6 +4,7 @@
 #include "planner/operator/logical_intersect_multiway.h"
 #include "processor/operator/hash_join/hash_join_build.h"
 #include "processor/operator/intersect/intersect_multiway.h"
+#include "processor/operator/intersect/intersect_multiway_build.h"
 #include "processor/plan_mapper.h"
 #include "storage/buffer_manager/memory_manager.h"
 
@@ -70,8 +71,7 @@ std::unique_ptr<PhysicalOperator> PlanMapper::mapIntersectMultiway(
         auto sharedState = std::make_shared<HashJoinSharedState>(std::move(globalHashTable));
         sharedStates.push_back(sharedState);
         auto printInfo = std::make_unique<HashJoinBuildPrintInfo>(keys, payloadExpressions);
-        auto build = std::make_unique<HashJoinBuild>(PhysicalOperatorType::HASH_JOIN_BUILD,
-            sharedState, std::move(buildInfo), std::move(buildPrevOperator), getOperatorID(),
+        auto build = std::make_unique<IntersectMultiwayBuild>(sharedState, std::move(buildInfo), std::move(buildPrevOperator), getOperatorID(),
             std::move(printInfo));
         build->setDescriptor(std::make_unique<ResultSetDescriptor>(buildSchema));
         buildChildren.push_back(std::move(build));
