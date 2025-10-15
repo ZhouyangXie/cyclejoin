@@ -80,7 +80,6 @@ struct IntersectMultiwayDataInfo {
                 KU_ASSERT(i_payloadsDataPos[j].size() == i_payloadsColRange[j].size());
                 if (i_connectivity[j]) {
                     KU_ASSERT(i_keyOffsetInTuple[j] != -1u);
-                    // TODO: currently we do not support populating the payloads
                     KU_ASSERT(i_payloadsDataPos[j].size() == 0);
                     for (auto& pos : i_payloadsDataPos[j]) {
                         KU_ASSERT(pos.isValid());
@@ -129,10 +128,8 @@ public:
           info{std::move(intersectDataInfo)}, sharedHTs{std::move(sharedHTs)} {
         KU_ASSERT(children[0]->getOperatorType() == PhysicalOperatorType::FLATTEN);
         KU_ASSERT(this->sharedHTs.size() == numLeftNodes());
-        // TODO: check that the number of columns, flatness of each sharedHT is correct
         for (size_t i = 0; i < numLeftNodes(); i++) {
             auto ht_schema = this->sharedHTs[i]->getHashTable()->getTableSchema();
-            // TODO: currently not considering other payload attributes
             KU_ASSERT(ht_schema->getNumColumns() == info->left2right_idx.size() + 3);
             KU_ASSERT(ht_schema->getColumn(0)->isFlat());
             for (size_t j = 0; j < info->left2right_idx.size(); j++) {
@@ -184,6 +181,10 @@ private:
     // this state stores the loop state
     friend IntersectionLoopState;
     std::shared_ptr<IntersectionLoopState> loopState;
+
+    // dynamic ordering temp variables
+    std::vector<size_t> card_prod;
+    std::vector<size_t> dynamic_order;
 };
 
 struct IntersectionLoopState {
