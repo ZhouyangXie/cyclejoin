@@ -90,7 +90,6 @@ bool IntersectMultiway::probeHTs() {
         if (sharedHTs[i] -> getHashTable() -> getNumEntries() == 0) {
             continue;
         }
-        // TODO: remove this check
         KU_ASSERT(probeKeyVectors[i]->state->getSelSize() == 1);
         auto key = probeKeyVectors[i] -> getValue<nodeID_t>(probeKeyVectors[i]->state->getSelVector()[0]);
         function::Hash::operation<nodeID_t>(key, false, hashVal);
@@ -100,7 +99,6 @@ bool IntersectMultiway::probeHTs() {
             if (*(nodeID_t*)flatTuple == key) {
                 has_match = true;
                 for(auto j: info->left2right_idx[i]){
-                    // TODO: check that all intersect keys are store in unflat columns
                     overflow_value_t * p_tuple = (overflow_value_t*)(flatTuple + info->keyOffsetInTuple[i][j]);
                     if(p_tuple->numElements == 0){
                         continue;
@@ -153,8 +151,6 @@ public:
         return finished;
     }
 
-    // TODO: implement a `toUtil(nodeID_t)` method to find an ID by exponential search.
-
     void gotoNext(){
         KU_ASSERT(!finished);
         if(ele_idx + 1 < tuples[tuple_idx].numElements){
@@ -171,9 +167,54 @@ public:
         }
     }
 
+    inline nodeID_t getEleOfCurrentTuple(sel_t idx){
+        return ((nodeID_t*)(tuples[tuple_idx].value))[idx];
+    }
+
+    void goUtil(nodeID_t target){
+        KU_ASSERT(!finished);
+        KU_ASSERT(getCurrentID() < target);
+        // find the correct tuple_idx
+        do {
+            auto end_ele = getEleOfCurrentTuple(tuples[tuple_idx].numElements - 1);
+            if(end_ele < target){
+                tuple_idx++;
+                if(tuple_idx + 1 > tuples.size()){
+                    finished = true;
+                    return;
+                }
+            } else{
+                break;
+            }
+        } while(true);
+        // binary search
+        sel_t start = 0;
+        sel_t end = tuples[tuple_idx].numElements - 1;
+        do{
+            if(getEleOfCurrentTuple(start) >= target){
+                ele_idx = start;
+                break;
+            }
+            if(getEleOfCurrentTuple(end) == target){
+                ele_idx = end;
+                break;
+            }
+            if(start + 1 >= end){
+                ele_idx = end;
+                break;
+            }
+            auto mid = (start + end)/2;
+            if(getEleOfCurrentTuple(mid) >= target){
+                end = mid;
+            } else{
+                start = mid;
+            }
+        }while(true);
+    }
+
     nodeID_t getCurrentID(){
         KU_ASSERT(!finished);
-        return ((nodeID_t*)(tuples[tuple_idx].value))[ele_idx];
+        return getEleOfCurrentTuple(ele_idx);
     }
 
     void selectCurrent(){
@@ -230,7 +271,7 @@ bool IntersectMultiway::multiway_intersect_on_sorted_tuples(size_t rightSideNode
                     break;
                 }
                 else {
-                    cursor.gotoNext();
+                    cursor.goUtil(target);
                     if(cursor.hasFinished()){
                         // a set is exhausted, finish the whole loop
                         finished = true;
@@ -327,9 +368,6 @@ bool IntersectMultiway::getNextTuplesInternal(ExecutionContext* context){
             sel->getSelSize() * sizeof(sel_t)
         );
         num_output_tuples *= sel->getSelSize();
-
-        // TODO: it might be more efficient to move as many intersection IDs to outKeyVectors as possible, like Intersect
-        // TODO: Populate the payloads
     }
 
     // move forward the cursor
