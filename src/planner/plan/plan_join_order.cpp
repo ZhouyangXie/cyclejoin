@@ -250,31 +250,46 @@ static bool allowEmptyHashProbeResult(LogicalPlan & plan){
 LogicalPlan Planner::planQueryGraphWithMultiwayIntersect(
     const QueryGraph& queryGraph,
     const QueryGraphPlanningInfo& info) {
-    auto queryGraphSimple = QueryGraphSimple::fromQueryGraph(queryGraph);
-    auto [probeGraphSimple, buildGraphsSimple, remainingGraphsSimple] = queryGraphSimple.findOneMaximalDense();
-    if(probeGraphSimple.isEmpty()){
+    auto Q = binder::simple::fromQueryGraph(queryGraph);
+    auto [G_probe, trees] = binder::simple::findBestCycleJoin(Q);
+    if(G_probe.isEmpty() || trees.empty()){
         return LogicalPlan();
     }
+
     // plan the probe side recursively
-    auto [probeGraph, probeInfo] = probeGraphSimple.toQueryGraphAndInfo(queryGraph, info);
+    auto [probeGraph, probeInfo] = G_probe.toQueryGraphAndInfo(queryGraph, info);
     auto probeGraphPlan = planQueryGraph(probeGraph, probeInfo);
-    // plan each build graph by a hint tree
+
+    // plan the build sides
     binder::expression_map<LogicalPlan> probeNodeToBuildGraphPlans;
     binder::expression_map<binder::expression_vector> probeNodeToBuildNodes;
-    for(auto & buildGraphSimple: buildGraphsSimple){
+    std::vector<binder::simple::Graph> buildGraphsSimple;
+    for(auto & paths: trees){
+        binder::simple::Graph buildGraphSimple;
+        for(auto & path: paths){
+            buildGraphSimple.mergeFrom(path);
+        }
         auto [buildGraph, buildGraphInfo] = buildGraphSimple.toQueryGraphAndInfo(queryGraph, info);
-        auto [hint_tree, probe_node, build_nodes] = buildGraphSimple.toHintTree(queryGraph);
+        auto [hint_tree, probe_node, build_nodes] = binder::simple::pathsToHintTree(paths, queryGraph);
         buildGraphInfo.hint = hint_tree;
-        probeNodeToBuildGraphPlans[probe_node] = planQueryGraph(buildGraph, buildGraphInfo);
-        bool successful = replaceWithSharedExtend(probeNodeToBuildGraphPlans[probe_node]);
-        KU_ASSERT(successful);
-        successful = allowEmptyHashProbeResult(probeNodeToBuildGraphPlans[probe_node]);
-        KU_ASSERT(successful);
+        auto build_plan = planQueryGraph(buildGraph, buildGraphInfo);
+        bool successful = replaceWithSharedExtend(build_plan);
+        KU_ASSERT_UNCONDITIONAL(successful);
+        successful = allowEmptyHashProbeResult(build_plan);
+        KU_ASSERT_UNCONDITIONAL(successful);
+        probeNodeToBuildGraphPlans[probe_node] = std::move(build_plan);
         probeNodeToBuildNodes[probe_node] = std::move(build_nodes);
+        buildGraphsSimple.push_back(buildGraphSimple);
     }
     // combine probeGraph and buildGraphs by appendIntersectMultiway
     appendIntersectMultiway(std::move(probeNodeToBuildNodes), probeGraphPlan, probeNodeToBuildGraphPlans);
     LogicalPlan finalPlan = probeGraphPlan;
+    // get the remaining graphs
+    Q.removeEdgesFrom(G_probe);
+    for(auto & buildGraphSimple: buildGraphsSimple){
+        Q.removeEdgesFrom(buildGraphSimple);
+    }
+    std::vector<binder::simple::Graph> remainingGraphsSimple = binder::simple::getConnectedSubgraphs(Q);
     // plan each remaining graph recursively and hash-joined by the dense subgraph
     for(auto & remainingGraphSimple: remainingGraphsSimple){
         if(remainingGraphSimple.nodes.size() <= 1){
