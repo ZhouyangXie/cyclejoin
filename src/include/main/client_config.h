@@ -24,6 +24,7 @@ struct ClientConfigDefault {
     static constexpr bool ENABLE_PLAN_OPTIMIZER = true;
     static constexpr bool ENABLE_INTERNAL_CATALOG = false;
     static constexpr bool ENABLE_MULTIWAY_INTERSECT = false;
+    static constexpr bool ENCOURAGE_WCOJ = false;
 };
 
 struct ClientConfig {
@@ -60,6 +61,8 @@ struct ClientConfig {
     bool enableInternalCatalog = ClientConfigDefault::ENABLE_INTERNAL_CATALOG;
     // use multiway WCOJ optimizer
     bool enableMultiwayIntersect = ClientConfigDefault::ENABLE_MULTIWAY_INTERSECT;
+    // encourage WCOJ
+    bool encourageWCOJ = ClientConfigDefault::ENCOURAGE_WCOJ;
 };
 
 } // namespace main

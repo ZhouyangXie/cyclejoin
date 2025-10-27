@@ -1,3 +1,4 @@
+#include "main/client_context.h"
 #include "planner/join_order/cost_model.h"
 #include "planner/operator/logical_hash_join.h"
 #include "planner/operator/logical_intersect.h"
@@ -116,7 +117,11 @@ void Planner::appendIntersect(const std::shared_ptr<Expression>& intersectNodeID
     }
     intersect->setCardinality(cardinalityEstimator.estimateIntersect(boundNodeIDs,
         probePlan.getLastOperatorRef(), buildOps));
-    probePlan.setCost(CostModel::computeIntersectCost(probePlan, buildPlans));
+    if(clientContext->getClientConfig()->encourageWCOJ){
+        probePlan.setCost(CostModel::computeIntersectCost(probePlan, buildPlans) / WCOJ_ENCOURAGEMENT_DISCOUNT);
+    } else {
+        probePlan.setCost(CostModel::computeIntersectCost(probePlan, buildPlans));
+    }
     probePlan.setLastOperator(std::move(intersect));
 }
 

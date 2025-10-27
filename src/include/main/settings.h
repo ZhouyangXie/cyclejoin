@@ -265,5 +265,17 @@ struct EnableMultiwayIntersectSetting {
     }
 };
 
+struct EncourageWCOJSetting {
+    static constexpr auto name = "encourage_wcoj";
+    static constexpr auto inputType = common::LogicalTypeID::BOOL;
+    static void setContext(ClientContext* context, const common::Value& parameter) {
+        parameter.validateType(inputType);
+        context->getClientConfigUnsafe()->encourageWCOJ = parameter.getValue<bool>();
+    }
+    static common::Value getSetting(const ClientContext* context) {
+        return common::Value(context->getClientConfig()->encourageWCOJ);
+    }
+};
+
 } // namespace main
 } // namespace kuzu

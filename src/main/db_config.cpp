@@ -23,7 +23,7 @@ static ConfigurationOption options[] = { // NOLINT(cert-err58-cpp):
     GET_CONFIGURATION(CheckpointThresholdSetting), GET_CONFIGURATION(AutoCheckpointSetting),
     GET_CONFIGURATION(ForceCheckpointClosingDBSetting), GET_CONFIGURATION(SpillToDiskSetting),
     GET_CONFIGURATION(EnableOptimizerSetting), GET_CONFIGURATION(EnableInternalCatalogSetting),
-    GET_CONFIGURATION(EnableMultiwayIntersectSetting)
+    GET_CONFIGURATION(EnableMultiwayIntersectSetting), GET_CONFIGURATION(EncourageWCOJSetting)
 };
 
 DBConfig::DBConfig(const SystemConfig& systemConfig)

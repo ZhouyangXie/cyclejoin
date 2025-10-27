@@ -5,6 +5,8 @@
 namespace kuzu {
 namespace planner {
 
+const uint64_t WCOJ_ENCOURAGEMENT_DISCOUNT = 512u;
+
 class CostModel {
 public:
     static uint64_t computeExtendCost(const LogicalPlan& childPlan);

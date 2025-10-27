@@ -71,6 +71,7 @@ ClientContext::ClientContext(Database* database)
     clientConfig.disableMapKeyCheck = ClientConfigDefault::DISABLE_MAP_KEY_CHECK;
     clientConfig.warningLimit = ClientConfigDefault::WARNING_LIMIT;
     clientConfig.enableMultiwayIntersect = ClientConfigDefault::ENABLE_MULTIWAY_INTERSECT;
+    clientConfig.encourageWCOJ = ClientConfigDefault::ENCOURAGE_WCOJ;
     progressBar = std::make_unique<ProgressBar>(clientConfig.enableProgressBar);
 }
 
