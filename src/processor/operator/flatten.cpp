@@ -14,7 +14,7 @@ void Flatten::initLocalStateInternal(ResultSet* resultSet, ExecutionContext* /*c
 }
 
 bool Flatten::getNextTuplesInternal(ExecutionContext* context) {
-    if (localState->currentIdx == localState->sizeToFlatten) {
+    if (localState->currentIdx >= localState->sizeToFlatten) {
         dataChunkState->setToUnflat(); // TODO(Xiyang): this should be part of restore/save
         restoreSelVector(*dataChunkState);
         if (!children[0]->getNextTuple(context)) {
@@ -25,9 +25,13 @@ bool Flatten::getNextTuplesInternal(ExecutionContext* context) {
         saveSelVector(*dataChunkState);
         dataChunkState->setToFlat();
     }
-    sel_t selPos = prevSelVector->operator[](localState->currentIdx++);
-    currentSelVector->operator[](0) = selPos;
-    metrics->numOutputTuple.incrementByOne();
+    if (localState->currentIdx < localState->sizeToFlatten){
+        sel_t selPos = prevSelVector->operator[](localState->currentIdx++);
+        currentSelVector->operator[](0) = selPos;
+        metrics->numOutputTuple.incrementByOne();
+    } else {
+        currentSelVector->setSelSize(0);
+    }
     return true;
 }
 
