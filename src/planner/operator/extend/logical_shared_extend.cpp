@@ -44,7 +44,7 @@ void LogicalSharedExtend::computeFlatSchema() {
 
 std::unique_ptr<LogicalOperator> LogicalSharedExtend::copy() {
     auto extend = std::make_unique<LogicalSharedExtend>(
-        boundNode, nbrNodes, rels, directions, properties, children[0]->copy(), cardinality
+        boundNode, nbrNodes, rels, directions, properties, flatScan, children[0]->copy(), cardinality
     );
     for(size_t i = 0; i < getNumberOfSharing(); i++){
         extend->setPropertyPredicates(i, copyVector(propertyPredicates[i]));

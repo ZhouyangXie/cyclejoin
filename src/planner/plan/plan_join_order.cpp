@@ -181,7 +181,7 @@ LogicalPlan Planner::planQueryGraph(const QueryGraph& queryGraph,
     return bestPlan;
 }
 
-static bool replaceWithSharedExtend(LogicalPlan & plan){
+static bool replaceWithSharedExtend(LogicalPlan & plan, std::vector<bool> flatScan){
     // go to the left child till the first extend
     std::shared_ptr<LogicalOperator> root = plan.getLastOperator();
     while(root->getChild(0)->getOperatorType() != LogicalOperatorType::EXTEND){
@@ -225,7 +225,7 @@ static bool replaceWithSharedExtend(LogicalPlan & plan){
         properties.push_back(extend->getProperties());
     }
     auto sharedExtend = std::make_shared<LogicalSharedExtend>(
-        boundNode, nbrNodes, rels, directions, properties, insert_node->getChild(0)
+        boundNode, nbrNodes, rels, directions, properties, std::move(flatScan), insert_node->getChild(0)
     );
     // insert it
     insert_node->setChild(0, sharedExtend);
@@ -266,14 +266,17 @@ LogicalPlan Planner::planQueryGraphWithMultiwayIntersect(
     std::vector<binder::simple::Graph> buildGraphsSimple;
     for(auto & paths: trees){
         binder::simple::Graph buildGraphSimple;
+        std::vector<bool> flatScan; flatScan.reserve(paths.size());
         for(auto & path: paths){
+            flatScan.push_back(path.size() > 2);
             buildGraphSimple.mergeFrom(path);
         }
+        std::reverse(flatScan.begin(), flatScan.end());
         auto [buildGraph, buildGraphInfo] = buildGraphSimple.toQueryGraphAndInfo(queryGraph, info);
         auto [hint_tree, probe_node, build_nodes] = binder::simple::pathsToHintTree(paths, queryGraph);
         buildGraphInfo.hint = hint_tree;
         auto build_plan = planQueryGraph(buildGraph, buildGraphInfo);
-        bool successful = replaceWithSharedExtend(build_plan);
+        bool successful = replaceWithSharedExtend(build_plan, std::move(flatScan));
         KU_ASSERT_UNCONDITIONAL(successful);
         successful = allowEmptyHashProbeResult(build_plan);
         KU_ASSERT_UNCONDITIONAL(successful);

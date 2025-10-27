@@ -106,6 +106,7 @@ std::unique_ptr<PhysicalOperator> PlanMapper::mapSharedExtend(const LogicalOpera
     }
     return std::make_unique<SharedScanRelTable>(
         scanInfos, scanRelInfos,
+        extend->getFlatScan(),
         std::move(prevOperator), getOperatorID(),
         std::make_unique<SharedScanRelTablePrintInfo>(printInfos)
     );

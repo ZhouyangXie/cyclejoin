@@ -61,6 +61,7 @@ public:
         std::vector<std::shared_ptr<binder::RelExpression>> rels,
         std::vector<common::ExtendDirection> directions,
         std::vector<binder::expression_vector> properties,
+        std::vector<bool> flatScan,
         std::shared_ptr<LogicalOperator> child,
         common::cardinality_t cardinality = 0
     ):
@@ -69,11 +70,13 @@ public:
     nbrNodes{std::move(nbrNodes)},
     rels{std::move(rels)},
     directions{std::move(directions)},
-    properties{std::move(properties)}
+    properties{std::move(properties)},
+    flatScan{std::move(flatScan)}
     {
         KU_ASSERT(getNumberOfSharing() == this->rels.size());
         KU_ASSERT(getNumberOfSharing() == this->directions.size());
         KU_ASSERT(getNumberOfSharing() == this->properties.size());
+        KU_ASSERT(getNumberOfSharing() == this->flatScan.size());
         this->cardinality = cardinality;
         scanNbrID.resize(getNumberOfSharing(), true);
         properties.resize(getNumberOfSharing());
@@ -108,12 +111,15 @@ public:
         return std::make_unique<LogicalSharedExtendPrintInfo>(boundNode, nbrNodes, rels, directions);
     }
 
+    std::vector<bool> getFlatScan() const { return this->flatScan;}
+
 private:
     std::shared_ptr<binder::NodeExpression> boundNode;
     std::vector<std::shared_ptr<binder::NodeExpression>> nbrNodes;
     std::vector<std::shared_ptr<binder::RelExpression>> rels;
     std::vector<common::ExtendDirection> directions;
     std::vector<binder::expression_vector> properties;
+    std::vector<bool> flatScan;
 
     std::vector<bool> scanNbrID;
     std::vector<std::vector<storage::ColumnPredicateSet>> propertyPredicates;

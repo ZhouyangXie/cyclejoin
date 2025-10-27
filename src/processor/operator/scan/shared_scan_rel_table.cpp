@@ -38,6 +38,8 @@ void SharedScanRelTable::initLocalStateInternal(ResultSet* resultSet, ExecutionC
         tableInfos[i].initScanState(*scanStates[i], outVectors[i], clientContext);
     }
     stateFinished.resize(scanStates.size(), true);
+    flattenScanIndex.resize(getNumberOfSharing(), 0);
+    flattenScanSize.resize(getNumberOfSharing(), 0);
 }
 
 bool SharedScanRelTable::getNextTuplesInternal(ExecutionContext* context){
@@ -54,12 +56,41 @@ bool SharedScanRelTable::getNextTuplesInternal(ExecutionContext* context){
     for(size_t i = 0; i < getNumberOfSharing(); i++){
         if(!stateFinished[i]){
             stateFinished[i] = true;
-            while(tableInfos[i].table->scan(transaction, *scanStates[i])){
-                auto outputSize = scanStates[i]->outState->getSelSize();
-                if(outputSize > 0){
-                    metrics->numOutputTuple.increase(outputSize);
+            if(flattenScans[i]){
+                if((flattenScanIndex[i] + 1) < flattenScanSize[i]){
+                    flattenScanIndex[i]++;
+                    auto new_position = scanStates[i]->outState->getSelVectorUnsafe().getMutableBuffer()[flattenScanIndex[i]];
+                    scanStates[i]->outState->getSelVectorUnsafe()[0] = new_position;
+                    scanStates[i]->outState->getSelVectorUnsafe().setSelSize(1);
                     stateFinished[i] = false;
-                    break;
+                } else {
+                    // the current batch have been finished, scan for the next batch
+                    while(tableInfos[i].table->scan(transaction, *scanStates[i])){
+                        auto outputSize = scanStates[i]->outState->getSelSize();
+                        if(outputSize > 0){
+                            metrics->numOutputTuple.increase(outputSize);
+                            stateFinished[i] = false;
+                            break;
+                        }
+                    }
+                    if(!stateFinished[i]){
+                        flattenScanSize[i] = scanStates[i]->outState->getSelSize();
+                        flattenScanIndex[i] = 0;
+                        scanStates[i]->outState->getSelVectorUnsafe().setSelSize(1);
+                    } else {
+                        flattenScanSize[i] = 0;
+                        flattenScanIndex[i] = 0;
+                        scanStates[i]->outState->getSelVectorUnsafe().setSelSize(0);
+                    }
+                }
+            } else {
+                while(tableInfos[i].table->scan(transaction, *scanStates[i])){
+                    auto outputSize = scanStates[i]->outState->getSelSize();
+                    if(outputSize > 0){
+                        metrics->numOutputTuple.increase(outputSize);
+                        stateFinished[i] = false;
+                        break;
+                    }
                 }
             }
             if(stateFinished[i]){

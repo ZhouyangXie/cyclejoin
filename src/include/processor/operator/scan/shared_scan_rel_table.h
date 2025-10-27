@@ -34,11 +34,13 @@ public:
     SharedScanRelTable(
         std::vector<ScanOpInfo> opInfos,
         std::vector<ScanRelTableInfo> tableInfos,
+        std::vector<bool> flattenScans,
         std::unique_ptr<PhysicalOperator> child, physical_op_id id,
         std::unique_ptr<OPPrintInfo> printInfo
     ): PhysicalOperator{type_, std::move(child), id, std::move(printInfo)},
     tableInfos{std::move(tableInfos)}, opInfos{std::move(opInfos)} {
         KU_ASSERT(this->tableInfos.size() == this->opInfos.size());
+        this->flattenScans = flattenScans;
     }
 
     void initLocalStateInternal(ResultSet* resultSet, ExecutionContext* context) override;
@@ -48,13 +50,16 @@ public:
     size_t getNumberOfSharing() const { return tableInfos.size();}
 
     std::unique_ptr<PhysicalOperator> copy() override {
-        return std::make_unique<SharedScanRelTable>(opInfos, tableInfos, children[0]->copy(), id, printInfo->copy());
+        return std::make_unique<SharedScanRelTable>(opInfos, tableInfos, flattenScans, children[0]->copy(), id, printInfo->copy());
     }
 
 private:
     std::vector<ScanRelTableInfo> tableInfos;
     std::vector<std::unique_ptr<storage::RelTableScanState>> scanStates;
     std::vector<bool> stateFinished;
+    std::vector<bool> flattenScans;
+    std::vector<common::sel_t> flattenScanIndex;
+    std::vector<common::sel_t> flattenScanSize;
 
     std::vector<ScanOpInfo> opInfos;
     std::vector<std::vector<common::ValueVector*>> outVectors;
