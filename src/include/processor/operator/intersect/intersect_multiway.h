@@ -92,8 +92,8 @@ struct IntersectMultiwayDataInfo {
                     i_non_empty_count++;
                 } else {
                     KU_ASSERT(i_keyOffsetInTuple[j] == -1u);
-                    KU_ASSERT(i_payloadsDataPos.size() == 0);
-                    KU_ASSERT(i_payloadsColRange.size() == 0);
+                    KU_ASSERT(i_payloadsDataPos[j].size() == 0);
+                    KU_ASSERT(i_payloadsColRange[j].size() == 0);
                 }
             }
             KU_ASSERT(i_non_empty_count >= 2);
@@ -130,13 +130,13 @@ public:
         KU_ASSERT(this->sharedHTs.size() == numLeftNodes());
         for (size_t i = 0; i < numLeftNodes(); i++) {
             auto ht_schema = this->sharedHTs[i]->getHashTable()->getTableSchema();
-            KU_ASSERT(ht_schema->getNumColumns() == info->left2right_idx.size() + 3);
+            KU_ASSERT(ht_schema->getNumColumns() == info->left2right_idx[i].size() + 3);
             KU_ASSERT(ht_schema->getColumn(0)->isFlat());
-            for (size_t j = 0; j < info->left2right_idx.size(); j++) {
+            for (size_t j = 0; j < info->left2right_idx[i].size(); j++) {
                 KU_ASSERT(!ht_schema->getColumn(1 + j)->isFlat());
             }
-            KU_ASSERT(ht_schema->getColumn(info->left2right_idx.size() + 1)->isFlat()); // hash
-            KU_ASSERT(ht_schema->getColumn(info->left2right_idx.size() + 2)
+            KU_ASSERT(ht_schema->getColumn(info->left2right_idx[i].size() + 1)->isFlat()); // hash
+            KU_ASSERT(ht_schema->getColumn(info->left2right_idx[i].size() + 2)
                     ->isFlat()); // chaining pointer
         }
     }
@@ -196,12 +196,11 @@ struct IntersectionLoopState {
 
     explicit IntersectionLoopState(IntersectMultiway* op) : op{op}, finished{true} {
         tuple_cursors.resize(op->numRightNodes(), 0);
-        smallesLeftSide.resize(op->numRightNodes(), 0);
+        smallesLeftSide.resize(op->numRightNodes(), -1u);
         // Choose the one with least number of tuples to iterate
         for (size_t j = 0; j < op->numRightNodes(); j++) {
             for (auto i : op->info->right2left_idx[j]) {
-                if (op->intersectSelVectors[i][j].size() <
-                    op->intersectSelVectors[smallesLeftSide[j]][j].size()) {
+                if (smallesLeftSide[j] == -1u || op->intersectSelVectors[i][j].size() < op->intersectSelVectors[smallesLeftSide[j]][j].size()) {
                     smallesLeftSide[j] = i;
                 }
             }
