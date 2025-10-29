@@ -399,7 +399,7 @@ include_directories(third_party/pcg)
 include_directories(third_party/lz4)
 include_directories(third_party/roaring_bitmap)
 # Use SYSTEM to suppress warnings from simsimd
-include_directories(SYSTEM third_party/simsimd/include)
+# include_directories(SYSTEM third_party/simsimd/include)
 
 add_subdirectory(third_party)
 
