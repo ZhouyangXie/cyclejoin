@@ -91,7 +91,7 @@ bool IntersectMultiway::probeHTs() {
             probedIds[i][j].clear();
         }
         if (sharedHTs[i] -> getHashTable() -> getNumEntries() == 0) {
-            continue;
+            return false;
         }
         KU_ASSERT(probeKeyVectors[i]->state->getSelSize() == 1);
         auto key = probeKeyVectors[i] -> getValue<nodeID_t>(probeKeyVectors[i]->state->getSelVector()[0]);
