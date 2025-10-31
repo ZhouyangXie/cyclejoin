@@ -60,8 +60,8 @@ bool SharedScanRelTable::getNextTuplesInternal(ExecutionContext* context){
                 if((flattenScanIndex[i] + 1) < flattenScanSize[i]){
                     flattenScanIndex[i]++;
                     auto new_position = scanStates[i]->outState->getSelVectorUnsafe().getMutableBuffer()[flattenScanIndex[i]];
+                    scanStates[i]->outState->getSelVectorUnsafe().setToFiltered(1);
                     scanStates[i]->outState->getSelVectorUnsafe()[0] = new_position;
-                    scanStates[i]->outState->getSelVectorUnsafe().setSelSize(1);
                     stateFinished[i] = false;
                 } else {
                     // the current batch have been finished, scan for the next batch
