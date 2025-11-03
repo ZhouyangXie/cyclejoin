@@ -1,5 +1,6 @@
 #include <memory>
 
+#include "main/client_context.h"
 #include "binder/expression/expression_util.h"
 #include "planner/operator/logical_intersect_multiway.h"
 #include "processor/operator/hash_join/hash_join_build.h"
@@ -96,7 +97,8 @@ std::unique_ptr<PhysicalOperator> PlanMapper::mapIntersectMultiway(
     auto probeChild = mapOperator(op->getChild(0).get());
     auto printInfo = std::make_unique<IntersecMultiwaytPrintInfo>(op->leftExpressions,
         op->rightExpressions, op->connectivity);
-    auto intersectMultiway = std::make_unique<IntersectMultiway>(info, sharedStates,
+    bool enable_dynamic_order = executionContext->clientContext->getClientConfig()->enableDynamicOrdering;
+    auto intersectMultiway = std::make_unique<IntersectMultiway>(info, sharedStates, enable_dynamic_order,
         std::move(probeChild), getOperatorID(), std::move(printInfo));
     for (auto& child : buildChildren) {
         intersectMultiway->addChild(std::move(child));

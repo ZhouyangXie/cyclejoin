@@ -122,10 +122,11 @@ class IntersectMultiway : public PhysicalOperator {
 public:
     IntersectMultiway(std::shared_ptr<IntersectMultiwayDataInfo> intersectDataInfo,
         std::vector<std::shared_ptr<HashJoinSharedState>> sharedHTs,
+        bool enable_dynamic_order,
         std::unique_ptr<PhysicalOperator> probeChild, uint32_t id,
         std::unique_ptr<OPPrintInfo> printInfo)
         : PhysicalOperator{type_, std::move(probeChild), id, std::move(printInfo)},
-          info{std::move(intersectDataInfo)}, sharedHTs{std::move(sharedHTs)} {
+          info{std::move(intersectDataInfo)}, sharedHTs{std::move(sharedHTs)}, enable_dynamic_order{enable_dynamic_order} {
         KU_ASSERT(children[0]->getOperatorType() == PhysicalOperatorType::FLATTEN);
         KU_ASSERT(this->sharedHTs.size() == numLeftNodes());
         for (size_t i = 0; i < numLeftNodes(); i++) {
@@ -149,7 +150,7 @@ public:
     bool getNextTuplesInternal(ExecutionContext* context) override;
 
     std::unique_ptr<PhysicalOperator> copy() override {
-        return std::make_unique<IntersectMultiway>(info, sharedHTs, children[0]->copy(), id,
+        return std::make_unique<IntersectMultiway>(info, sharedHTs, enable_dynamic_order, children[0]->copy(), id,
             printInfo->copy());
     }
 
@@ -185,6 +186,7 @@ private:
     // dynamic ordering temp variables
     std::vector<size_t> card_prod;
     std::vector<size_t> dynamic_order;
+    bool enable_dynamic_order;
 };
 
 struct IntersectionLoopState {

@@ -25,6 +25,8 @@ struct ClientConfigDefault {
     static constexpr bool ENABLE_INTERNAL_CATALOG = false;
     static constexpr bool ENABLE_MULTIWAY_INTERSECT = false;
     static constexpr bool ENCOURAGE_WCOJ = false;
+    static constexpr bool ENABLE_DYNAMIC_ORDERING = true;
+    static constexpr bool ENABLE_RANDOM_JOIN_ORDER = false;
 };
 
 struct ClientConfig {
@@ -63,6 +65,10 @@ struct ClientConfig {
     bool enableMultiwayIntersect = ClientConfigDefault::ENABLE_MULTIWAY_INTERSECT;
     // encourage WCOJ
     bool encourageWCOJ = ClientConfigDefault::ENCOURAGE_WCOJ;
+    // enable dynamic ordering
+    bool enableDynamicOrdering = ClientConfigDefault::ENABLE_DYNAMIC_ORDERING;
+    // enable randomness in multiway intersect planner
+    bool enableRandomJoinOrder = ClientConfigDefault::ENABLE_RANDOM_JOIN_ORDER;
 };
 
 } // namespace main

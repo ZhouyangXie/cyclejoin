@@ -277,5 +277,29 @@ struct EncourageWCOJSetting {
     }
 };
 
+struct EnableDynamicOrderingSetting {
+    static constexpr auto name = "enable_dynamic_ordering";
+    static constexpr auto inputType = common::LogicalTypeID::BOOL;
+    static void setContext(ClientContext* context, const common::Value& parameter) {
+        parameter.validateType(inputType);
+        context->getClientConfigUnsafe()->enableDynamicOrdering = parameter.getValue<bool>();
+    }
+    static common::Value getSetting(const ClientContext* context) {
+        return common::Value(context->getClientConfig()->enableDynamicOrdering);
+    }
+};
+
+struct EnableRandomJoinOrderSetting {
+    static constexpr auto name = "enable_random_join_order";
+    static constexpr auto inputType = common::LogicalTypeID::BOOL;
+    static void setContext(ClientContext* context, const common::Value& parameter) {
+        parameter.validateType(inputType);
+        context->getClientConfigUnsafe()->enableRandomJoinOrder = parameter.getValue<bool>();
+    }
+    static common::Value getSetting(const ClientContext* context) {
+        return common::Value(context->getClientConfig()->enableRandomJoinOrder);
+    }
+};
+
 } // namespace main
 } // namespace kuzu

@@ -251,7 +251,7 @@ LogicalPlan Planner::planQueryGraphWithMultiwayIntersect(
     const QueryGraph& queryGraph,
     const QueryGraphPlanningInfo& info) {
     auto Q = binder::simple::fromQueryGraph(queryGraph);
-    auto [G_probe, trees] = binder::simple::findBestCycleJoin(Q);
+    auto [G_probe, trees] = binder::simple::findBestCycleJoin(Q, clientContext->getClientConfig()->enableRandomJoinOrder);
     if(G_probe.isEmpty() || trees.empty()){
         return LogicalPlan();
     }

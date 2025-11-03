@@ -5,6 +5,7 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <random>
 
 #include "binder/query/reading_clause/bound_join_hint.h"
 #include "planner/planner.h"
@@ -562,12 +563,19 @@ bool compareCycleJoin(const Nodes& a, const Nodes& b, const std::vector<Path>& b
     return false;
 }
 
-std::pair<Graph, std::vector<std::vector<Path>>> findBestCycleJoin(const Graph& Q) {
+std::pair<Graph, std::vector<std::vector<Path>>> findBestCycleJoin(const Graph& Q, bool shuffle_baisc_paths) {
     std::vector<Path> P_basic = findBasicCycleIntersection(Q);
 
     if (P_basic.size() == 0) {
         return {Graph(), {}};
     }
+
+    if(shuffle_baisc_paths){
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(P_basic.begin(), P_basic.end(), g);
+    }
+
     std::vector<Graph> P;
     for (auto& basic : P_basic) {
         P.push_back(pathToGraph(basic));

@@ -72,6 +72,8 @@ ClientContext::ClientContext(Database* database)
     clientConfig.warningLimit = ClientConfigDefault::WARNING_LIMIT;
     clientConfig.enableMultiwayIntersect = ClientConfigDefault::ENABLE_MULTIWAY_INTERSECT;
     clientConfig.encourageWCOJ = ClientConfigDefault::ENCOURAGE_WCOJ;
+    clientConfig.enableDynamicOrdering = ClientConfigDefault::ENABLE_DYNAMIC_ORDERING;
+    clientConfig.enableRandomJoinOrder = ClientConfigDefault::ENABLE_RANDOM_JOIN_ORDER;
     progressBar = std::make_unique<ProgressBar>(clientConfig.enableProgressBar);
 }
 

@@ -80,6 +80,7 @@ void IntersectMultiway::initLocalStateInternal(ResultSet* resultSet, ExecutionCo
 
     card_prod.resize(numRightNodes());
     dynamic_order.resize(numRightNodes());
+    std::iota(dynamic_order.begin(), dynamic_order.end(), 0);
 }
 
 
@@ -336,20 +337,22 @@ bool IntersectMultiway::getNextTuplesInternal(ExecutionContext* context){
             }
         } while(!probeHTs());
 
-        // dynamic ordering: compute cardinality product
-        std::fill(card_prod.begin(), card_prod.end(), 1);
-        for(size_t j = 0; j < numRightNodes(); j++){
-            for(auto i: info->right2left_idx[j]){
-                uint64_t sum = 0;
-                for(auto & tuple: probedIds[i][j]){
-                    sum += tuple.numElements;
+        if(enable_dynamic_order){
+            // dynamic ordering: compute cardinality product
+            std::fill(card_prod.begin(), card_prod.end(), 1);
+            for(size_t j = 0; j < numRightNodes(); j++){
+                for(auto i: info->right2left_idx[j]){
+                    uint64_t sum = 0;
+                    for(auto & tuple: probedIds[i][j]){
+                        sum += tuple.numElements;
+                    }
+                    card_prod[j] *= sum;
                 }
-                card_prod[j] *= sum;
             }
+            // dynamic ordering: decide intersecting order by sorting the cardinality product
+            std::iota(dynamic_order.begin(), dynamic_order.end(), 0);
+            std::sort(dynamic_order.begin(), dynamic_order.end(), [this](int i, int j){return card_prod[i] < card_prod[j];});
         }
-        // dynamic ordering: decide intersecting order by sorting the cardinality product
-        std::iota(dynamic_order.begin(), dynamic_order.end(), 0);
-        std::sort(dynamic_order.begin(), dynamic_order.end(), [this](int i, int j){return card_prod[i] < card_prod[j];});
 
         // compute all the intersections and save them in intersectSelVectors
         bool has_empty = false;
