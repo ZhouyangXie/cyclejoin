@@ -15,8 +15,32 @@ double QuerySummary::getExecutionTime() const {
     return executionTime;
 }
 
+std::size_t QuerySummary::getNumHashInsert() const {
+    return numHashInsert;
+}
+
+std::size_t QuerySummary::getNumHashProbe() const {
+    return numHashProbe;
+}
+
+std::size_t QuerySummary::getNumIntersect() const {
+    return numIntersect;
+}
+
 void QuerySummary::setExecutionTime(double time) {
     executionTime = time;
+}
+
+void QuerySummary::setNumHashInsert(std::size_t num) {
+    numHashInsert = num;
+}
+
+void QuerySummary::setNumHashProbe(std::size_t num) {
+    numHashProbe = num;
+}
+
+void QuerySummary::setNumIntersect(std::size_t num) {
+    numIntersect = num;
 }
 
 void QuerySummary::incrementCompilingTime(double increment) {

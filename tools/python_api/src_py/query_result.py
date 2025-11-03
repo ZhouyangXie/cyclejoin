@@ -468,6 +468,18 @@ class QueryResult:
         self.check_for_query_result_close()
         return self._query_result.getCompilingTime()
 
+    def get_num_hash_insert(self) -> int:
+        self.check_for_query_result_close()
+        return self._query_result.getNumHashInsert()
+
+    def get_num_hash_probe(self) -> int:
+        self.check_for_query_result_close()
+        return self._query_result.getNumHashProbe()
+
+    def get_num_intersect(self) -> int:
+        self.check_for_query_result_close()
+        return self._query_result.getNumIntersect()
+
     def get_num_tuples(self) -> int:
         """
         Get the number of tuples which the query returned.

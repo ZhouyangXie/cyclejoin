@@ -99,6 +99,7 @@ public:
                 }
                 auto numTuplesAppended = hashTable->appendVectors(append_keys, append_payloads, append_keys[0]->state.get());
                 metrics->numOutputTuple.increase(numTuplesAppended);
+                metrics->numHashInsert.increase(numTuplesAppended);
                 has_unfinished = false;
                 for(size_t i = 0; i < cachedPayloadVectors.size(); i++){
                     indices[i]++;

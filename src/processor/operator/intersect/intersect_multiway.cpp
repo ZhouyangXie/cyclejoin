@@ -253,6 +253,9 @@ bool IntersectMultiway::multiway_intersect_on_sorted_tuples(size_t rightSideNode
     for(size_t i = 0; i < num_probes; i++){
         cursors.emplace_back(probedIds[info->right2left_idx[rightSideNodeIdx][i]][rightSideNodeIdx]);
         KU_ASSERT(cursors.back().sels.size() > 0);
+        for(auto & tuple: probedIds[info->right2left_idx[rightSideNodeIdx][i]][rightSideNodeIdx]){
+            metrics->numIntersect.increase(tuple.numElements);
+        }
     }
     nodeID_t target = cursors[0].getCurrentID();
     bool emptyIntersect = true;

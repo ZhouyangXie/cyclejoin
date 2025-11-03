@@ -147,6 +147,7 @@ void Intersect::intersectLists(const std::vector<overflow_value_t>& listsToInter
         intersectSelVectors[i + 1]->setToUnfiltered(listsToIntersect[i + 1].numElements);
         // twoWayIntersect will modify the leftNodeIDs buffer by swap intersected elements to the front
         // but lSelVector will represent element positions in the original listsToIntersect
+        metrics->numIntersect.increase(lSelVector.getSelSize() + (*intersectSelVectors[i + 1]).getSelSize());
         twoWayIntersect((nodeID_t*)outKeyVector->getData(), lSelVector,
             (nodeID_t*)listsToIntersect[i + 1].value, *intersectSelVectors[i + 1]);
         // Here we need to slice all selVectors that have been previously intersected, as all these

@@ -37,7 +37,19 @@ public:
      */
     KUZU_API double getExecutionTime() const;
 
+    KUZU_API std::size_t getNumHashInsert() const;
+
+    KUZU_API std::size_t getNumHashProbe() const;
+
+    KUZU_API std::size_t getNumIntersect() const;
+
     void setExecutionTime(double time);
+
+    void setNumHashInsert(std::size_t num);
+
+    void setNumHashProbe(std::size_t num);
+
+    void setNumIntersect(std::size_t num);
 
     void incrementCompilingTime(double increment);
 
@@ -55,6 +67,9 @@ public:
 
 private:
     double executionTime = 0;
+    std::size_t numHashInsert = 0;
+    std::size_t numHashProbe = 0;
+    std::size_t numIntersect = 0;
     PreparedSummary preparedSummary;
 };
 

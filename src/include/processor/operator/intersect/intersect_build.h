@@ -44,7 +44,9 @@ public:
 
     uint64_t appendVectors() final {
         KU_ASSERT(keyVectors.size() == 1);
-        return hashTable->appendVectorWithSorting(keyVectors[0], payloadVectors);
+        auto numTuplesAppended = hashTable->appendVectorWithSorting(keyVectors[0], payloadVectors);
+        metrics->numHashInsert.increase(numTuplesAppended);
+        return numTuplesAppended;
     }
 
     std::unique_ptr<PhysicalOperator> copy() override {

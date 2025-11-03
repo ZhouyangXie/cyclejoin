@@ -223,7 +223,10 @@ void PhysicalOperator::finalize(ExecutionContext* context) {
 void PhysicalOperator::registerProfilingMetrics(Profiler* profiler) {
     auto executionTime = profiler->registerTimeMetric(getTimeMetricKey());
     auto numOutputTuple = profiler->registerNumericMetric(getNumTupleMetricKey());
-    metrics = std::make_unique<OperatorMetrics>(*executionTime, *numOutputTuple);
+    auto numHashInsert = profiler->registerNumericMetric("numHashInsert");
+    auto numHashProbe = profiler->registerNumericMetric("numHashProbe");
+    auto numIntersect = profiler->registerNumericMetric("numIntersect");
+    metrics = std::make_unique<OperatorMetrics>(*executionTime, *numOutputTuple, *numHashInsert, *numHashProbe, *numIntersect);
 }
 
 double PhysicalOperator::getExecutionTime(Profiler& profiler) const {

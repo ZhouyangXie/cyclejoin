@@ -52,6 +52,12 @@ public:
 
     size_t getNumTuples();
 
+    size_t getNumHashInsert();
+
+    size_t getNumHashProbe();
+
+    size_t getNumIntersect();
+
 private:
     static py::dict convertNodeIdToPyDict(const kuzu::common::nodeID_t& nodeId);
 

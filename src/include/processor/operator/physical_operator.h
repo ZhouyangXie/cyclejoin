@@ -87,9 +87,19 @@ struct PhysicalOperatorUtils {
 struct OperatorMetrics {
     common::TimeMetric& executionTime;
     common::NumericMetric& numOutputTuple;
+    common::NumericMetric& numHashInsert;
+    common::NumericMetric& numHashProbe;
+    common::NumericMetric& numIntersect;
 
-    OperatorMetrics(common::TimeMetric& executionTime, common::NumericMetric& numOutputTuple)
-        : executionTime{executionTime}, numOutputTuple{numOutputTuple} {}
+    OperatorMetrics(
+        common::TimeMetric& executionTime,
+        common::NumericMetric& numOutputTuple,
+        common::NumericMetric& numHashInsert,
+        common::NumericMetric& numHashProbe,
+        common::NumericMetric& numIntersect
+    ): executionTime{executionTime}, numOutputTuple{numOutputTuple},
+    numHashInsert{numHashInsert}, numHashProbe{numHashProbe}, numIntersect{numIntersect}
+    {}
 };
 
 using physical_op_vector_t = std::vector<std::unique_ptr<PhysicalOperator>>;
