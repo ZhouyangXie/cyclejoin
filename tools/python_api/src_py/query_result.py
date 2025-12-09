@@ -480,6 +480,10 @@ class QueryResult:
         self.check_for_query_result_close()
         return self._query_result.getNumIntersect()
 
+    def get_used_buffer(self) -> int:
+        self.check_for_query_result_close()
+        return self._query_result.getUsedBuffer()
+
     def get_num_tuples(self) -> int:
         """
         Get the number of tuples which the query returned.
