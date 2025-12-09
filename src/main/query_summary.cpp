@@ -27,6 +27,10 @@ std::size_t QuerySummary::getNumIntersect() const {
     return numIntersect;
 }
 
+std::size_t QuerySummary::getUsedBuffer() const {
+    return usedBuffer;
+}
+
 void QuerySummary::setExecutionTime(double time) {
     executionTime = time;
 }
