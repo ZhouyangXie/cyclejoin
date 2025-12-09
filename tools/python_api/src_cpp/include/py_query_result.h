@@ -58,6 +58,8 @@ public:
 
     size_t getNumIntersect();
 
+    size_t getUsedBuffer();
+
 private:
     static py::dict convertNodeIdToPyDict(const kuzu::common::nodeID_t& nodeId);
 

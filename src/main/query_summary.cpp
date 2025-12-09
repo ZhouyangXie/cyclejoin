@@ -43,6 +43,10 @@ void QuerySummary::setNumIntersect(std::size_t num) {
     numIntersect = num;
 }
 
+void QuerySummary::setUsedBuffer(std::size_t num) {
+    usedBuffer = num;
+}
+
 void QuerySummary::incrementCompilingTime(double increment) {
     preparedSummary.compilingTime += increment;
 }

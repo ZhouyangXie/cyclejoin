@@ -550,7 +550,7 @@ std::unique_ptr<QueryResult> ClientContext::executeNoLock(PreparedStatement* pre
     this->resetActiveQuery();
     this->startTimer();
     auto executingTimer = TimeMetric(true /* enable */);
-    size_t numHashInsert = 0, numHashProbe = 0, numIntersect = 0;
+    size_t numHashInsert = 0, numHashProbe = 0, numIntersect = 0, used_buffer = 0;
     std::shared_ptr<FactorizedTable> resultFT;
     try {
         bool isTransactionStatement =
@@ -584,6 +584,7 @@ std::unique_ptr<QueryResult> ClientContext::executeNoLock(PreparedStatement* pre
                 numHashInsert = profiler->sumAllNumericMetricsWithKey("numHashInsert");
                 numHashProbe = profiler->sumAllNumericMetricsWithKey("numHashProbe");
                 numIntersect = profiler->sumAllNumericMetricsWithKey("numIntersect");
+                used_buffer = storage::MemoryManager::Get(*this)->getBufferManager()->getUsedMemory();
             },
             preparedStatement->isReadOnly(), isTransactionStatement,
             TransactionHelper::getAction(true /*shouldCommitNewTransaction*/,
@@ -609,6 +610,7 @@ std::unique_ptr<QueryResult> ClientContext::executeNoLock(PreparedStatement* pre
     summary->setNumHashInsert(numHashInsert);
     summary->setNumHashProbe(numHashProbe);
     summary->setNumIntersect(numIntersect);
+    summary->setUsedBuffer(used_buffer);
     result->setQuerySummary(std::move(summary));
     return result;
 }

@@ -40,6 +40,7 @@ void PyQueryResult::initialize(py::handle& m) {
         .def("getNumHashInsert", &PyQueryResult::getNumHashInsert)
         .def("getNumHashProbe", &PyQueryResult::getNumHashProbe)
         .def("getNumIntersect", &PyQueryResult::getNumIntersect)
+        .def("getUsedBuffer", &PyQueryResult::getUsedBuffer)
         .def("getNumTuples", &PyQueryResult::getNumTuples);
     // PyDateTime_IMPORT is a macro that must be invoked before calling any other cpython datetime
     // macros. One could also invoke this in a separate function like constructor. See
@@ -392,4 +393,8 @@ size_t PyQueryResult::getNumHashProbe() {
 
 size_t PyQueryResult::getNumIntersect() {
     return queryResult->getQuerySummary()->getNumIntersect();
+}
+
+size_t PyQueryResult::getUsedBuffer() {
+    return queryResult->getQuerySummary()->getUsedBuffer();
 }

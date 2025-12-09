@@ -43,6 +43,8 @@ public:
 
     KUZU_API std::size_t getNumIntersect() const;
 
+    KUZU_API std::size_t getUsedBuffer() const;
+
     void setExecutionTime(double time);
 
     void setNumHashInsert(std::size_t num);
@@ -50,6 +52,8 @@ public:
     void setNumHashProbe(std::size_t num);
 
     void setNumIntersect(std::size_t num);
+
+    void setUsedBuffer(std::size_t num);
 
     void incrementCompilingTime(double increment);
 
@@ -70,6 +74,7 @@ private:
     std::size_t numHashInsert = 0;
     std::size_t numHashProbe = 0;
     std::size_t numIntersect = 0;
+    std::size_t usedBuffer = 0;
     PreparedSummary preparedSummary;
 };
 
