@@ -1,71 +1,35 @@
-<div align="center">
-  <picture>
-    <source srcset="https://kuzudb.com/img/kuzu-logo-dark.png" media="(prefers-color-scheme: dark)">
-    <img src="https://kuzudb.com/img/kuzu-logo.png" height="100" alt="Kuzu Logo">
-  </picture>
-</div>
+## CycleJoin
 
-<br>
+This is the implementation of paper "CycleJoin: An Efficient Join-based Algorithm for Multi-Cyclic Subgraph Matching" (under review) based on [kuzu](https://github.com/kuzudb/kuzu).
 
-<p align="center">
-  <a href="https://github.com/kuzudb/kuzu/actions">
-    <img src="https://github.com/kuzudb/kuzu/actions/workflows/ci-workflow.yml/badge.svg?branch=master" alt="Github Actions Badge"></a>
-  <a href="https://discord.gg/VtX2gw9Rug">
-    <img src="https://img.shields.io/discord/1196510116388806837?logo=discord" alt="discord" /></a>
-  <a href="https://twitter.com/kuzudb">
-    <img src="https://img.shields.io/badge/follow-@kuzudb-1DA1F2?logo=twitter" alt="twitter"></a>
-</p>
+### Build
 
-# Kuzu
-Kuzu is an embedded graph database built for query speed and scalability. Kuzu is optimized for handling complex analytical workloads 
-on very large databases and provides a set of retrieval features, such as a full text search and vector indices. Our core feature set includes:
+Consult the official [building instructions](https://kuzudb.github.io/docs/developer-guide/) of kuzu to build from source.
 
-- Flexible Property Graph Data Model and Cypher query language
-- Embeddable, serverless integration into applications
-- Native full text search and vector index
-- Columnar disk-based storage
-- Columnar sparse row-based (CSR) adjacency list/join indices
-- Vectorized and factorized query processor
-- Novel and very fast join algorithms
-- Multi-core query parallelism
-- Serializable ACID transactions
-- Wasm (WebAssembly) bindings for fast, secure execution in the browser
+### Cypher Interface
 
-Kuzu is being developed by [Kùzu Inc.](https://kuzudb.com/) and 
-is available under a permissible license. So try it out and help us make it better! We welcome your feedback and feature requests.
+To execute Cypher queries with CycleJoin, simply execute the following statement beforehand:
 
-## Installation
+```
+CALL ENABLE_MULTIWAY_INTERSECT=true;
+```
 
-| Language | Installation                                                           |
-| -------- |------------------------------------------------------------------------|
-| Python   | `pip install kuzu`                                                     |
-| NodeJS   | `npm install kuzu`                                                     |
-| Rust     | `cargo add kuzu`                                                       |
-| Go       | `go get github.com/kuzudb/go-kuzu`                                     |
-| Swift    | [kuzu-swift](https://github.com/kuzudb/kuzu-swift)                     |
-| Java     | [Maven Central](https://central.sonatype.com/artifact/com.kuzudb/kuzu) |
-| C/C++    | [precompiled binaries](https://github.com/kuzudb/kuzu/releases/latest) |
-| CLI      | [precompiled binaries](https://github.com/kuzudb/kuzu/releases/latest) |
+To make a Cypher query by Python/C/Cpp, consult the [docs of kuzu](https://kuzudb.github.io/docs/).
 
-To learn more about installation, see our [Installation](https://docs.kuzudb.com/installation) page.
+### Investigate the CycleJoin Implementation
 
-## Getting Started
+The algorithms of CycleJoin are implemented in the following source code files:
 
-Refer to our [Getting Started](https://docs.kuzudb.com/get-started/) page for your first example.
+* Logical operator of CycleJoin: [.h](https://github.com/ZhouyangXie/cyclejoin/blob/dev-multiwaywcoj/src/include/planner/operator/logical_intersect_multiway.h), [.cpp](https://github.com/ZhouyangXie/cyclejoin/blob/dev-multiwaywcoj/src/planner/operator/logical_intersect_multiway.cpp).
 
-## Build from Source
+* Mapping from logical to physical operator: [.cpp](https://github.com/ZhouyangXie/cyclejoin/blob/dev-multiwaywcoj/src/processor/map/map_intersect_multiway.cpp).
 
-You can build from source using the instructions provided in the [developer guide](https://docs.kuzudb.com/developer-guide).
+* Physical operator of CycleJoin building phase (building shared hash tables): [.h](https://github.com/ZhouyangXie/cyclejoin/blob/dev-multiwaywcoj/src/include/processor/operator/intersect/intersect_multiway_build.h).
 
-## Contributing
-We welcome contributions to Kuzu. If you are interested in contributing to Kuzu, please read our [Contributing Guide](CONTRIBUTING.md).
+* Physical operator of CycleJoin probing phase (multiway intersection): [.h](https://github.com/ZhouyangXie/cyclejoin/blob/dev-multiwaywcoj/src/include/processor/operator/intersect/intersect_multiway.h), [.cpp](https://github.com/ZhouyangXie/cyclejoin/blob/dev-multiwaywcoj/src/processor/operator/intersect/intersect_multiway.cpp).
 
-## License
-By contributing to Kuzu, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+* Physical operator of SharedScan (sharing the rel table scanning): [.h](https://github.com/ZhouyangXie/cyclejoin/blob/dev-multiwaywcoj/src/include/processor/operator/scan/shared_scan_rel_table.h), [.cpp](https://github.com/ZhouyangXie/cyclejoin/blob/dev-multiwaywcoj/src/processor/operator/scan/shared_scan_rel_table.cpp).
 
-## Support 
-We provide professional support for using Kuzu, ensuring timely responses and flexible coverage. Please visit [here](https://kuzudb.com/#support) 
-for more information.
+* The CycleJoin-enabled query optimizer entrance: [.cpp:250](https://github.com/ZhouyangXie/cyclejoin/blob/32edf1caa59d8c994187b40d8cb6ae9aae7da1a0/src/planner/plan/plan_join_order.cpp#L250C13-L250C57).
 
-## Contact
-You can contact us at [contact@kuzudb.com](mailto:contact@kuzudb.com) or [join our Discord community](https://discord.gg/VtX2gw9Rug).
+* Finding basic paths, finding and comparing cycle-join graphs, finding external paths: [.hpp](https://github.com/ZhouyangXie/cyclejoin/blob/32edf1caa59d8c994187b40d8cb6ae9aae7da1a0/src/include/binder/query/query_graph_simple.hpp).
