@@ -245,7 +245,6 @@ struct Graph {
             new_node->addChild(leaf);
             hint_tree_node = new_node;
         }
-        // TODO: make sure the order in build_nodes is the same as the key order in HT!
         std::reverse(build_node_exps.begin(), build_node_exps.end());
         return {hint_tree_node, center_exp->getInternalID(), build_node_exps};
     }
@@ -682,7 +681,6 @@ pathsToHintTree(const std::vector<Path> & paths,  const QueryGraph& ref_graph) {
         hint_tree_root = new_node;
     }
 
-    // TODO: make sure the order in build_nodes is the same as the key order in HT!
     std::reverse(intersect_node_exps.begin(), intersect_node_exps.end());
 
     return {hint_tree_root, center_exp->getInternalID(), intersect_node_exps};
