@@ -1,15 +1,16 @@
-import kuzu
-
+from random import randint
 from os.path import isfile, basename
 from networkx import Graph, DiGraph
 
 
+import kuzu
 
-def translate_query_graph_to_cypher(query:  Graph) -> str:
+
+def translate_query_graph_to_cypher(query:  DiGraph) -> str:
     """Translate a query graph to Cypher query.
 
     Args:
-        query (Graph | DiGraph): The query graph with label.
+        query (DiGraph): The query graph with label.
             Each labelled node/edge should have a `label`(int) attribute and optionally with a `n_labels`(int) attribute.
             The where clause will condition that the label (mod `n_labels`) equals the `label`.
             The name of the vertices should be unique and convertible to str.
@@ -21,8 +22,6 @@ def translate_query_graph_to_cypher(query:  Graph) -> str:
     # MATCH e0, e1, e2, ..., v0, v1, v2, ...
     patterns = ", ".join([
         f"({v_src}:Vertex)-[{v_src}_{v_dst}:Edge]->({v_dst}:Vertex)"
-        if query.is_directed() else
-        f"({v_src}:Vertex)-[{v_src}_{v_dst}:Edge]-({v_dst}:Vertex)"
         for (v_src, v_dst) in query.edges.keys()
     ] + [
         f"({v}:Vertex)" for v in query.nodes
@@ -75,7 +74,8 @@ def run_query(query_graph: Graph, connection: kuzu.Connection, use_cycle_join: b
         use_cycle_join (bool): whether use CycleJoin
 
     Returns:
-        float: execution time in millisecond
+        float: execution time in millisecond (not including the parsing and query optimization time)
+        int: the number of matching results
     """
     if use_cycle_join:
         connection.execute("CALL ENABLE_MULTIWAY_INTERSECT=true;")
@@ -93,29 +93,211 @@ def run_query(query_graph: Graph, connection: kuzu.Connection, use_cycle_join: b
     return elapse
 
 
+def edge_list_to_graph_with_random_label(edge_list: list[tuple[str, str]], label_max: int) -> Graph:
+    """
+    Convert an edge list to a query graph, randomly label the vertices (a random int from 0 to `label_max` - 1)
+
+    Args:
+        edge_list (list[tuple[str, str]]): list of edges, no self-loop, should be connected
+        label_max (int): the random label range
+
+    Returns:
+        Graph: the query graph
+    """
+    assert label_max >= 1
+    nodes: set[str] = set()
+    for src, dst in edge_list:
+        nodes.add(src)
+        nodes.add(dst)
+    graph = DiGraph()
+    for node in nodes:
+        graph.add_node(node, label=randint(0, label_max - 1))
+    for src, dst in edge_list:
+        assert src != dst
+        graph.add_edge(src, dst)
+
+    return graph
+
+
 def run_example():
+    # load the data graph into kuzu database
     database_path = "./kuzu.db"
+    # this data graph has vertex label 0, 1, ..., 7
+    n_vertex_labels = 8
+    # convert the demo data graph (from https://snap.stanford.edu/data/ego-Facebook.html)
     convert_dataset("./nodes.csv", "./edges.csv", database_path)
-    db = kuzu.Database(database_path, max_num_threads=1)
+
+    # connect the database
+    db = kuzu.Database(database_path)
     conn = kuzu.Connection(db)
 
-    graph = DiGraph()
-    graph.add_node("a", label=0)
-    graph.add_node("b", label=1)
-    graph.add_node("c", label=2)
-    graph.add_node("d", label=3)
-    graph.add_edges_from([
-        ("a", "b"),
-        ("a", "c"),
-        ("a", "d"),
-        ("b", "c"),
-        ("b", "d"),
-    ], label=0)
+    # the evaluated query graphs in Figure 5 in the paper.
+    query_graphs: dict[str, list[tuple[str, str]]] = {
+        "Q1": [
+            ("u0", "u1"),
+            ("u0", "v0"),
+            ("u0", "v1"),
+            ("u1", "v0"),
+            ("u1", "v1"),
+        ],
+        "Q2": [
+            ("u0", "u1"),
+            ("u0", "v0"),
+            ("u0", "v1"),
+            ("u1", "v0"),
+            ("u1", "v1"),
+            ("v0", "v1")
+        ],
+        "Q3": [
+            ("u0", "u1"),
+            ("u0", "v0"),
+            ("u0", "v2"),
+            ("u1", "v1"),
+            ("u1", "v2"),
+            ("v0", "v1"),
+        ],
+        "Q4": [
+            ("u0", "u1"),
+            ("u0", "v0"),
+            ("u0", "v1"),
+            ("u1", "v0"),
+            ("u1", "v1"),
+            ("u1", "r0"),
+        ],
+        "Q5": [
+            ("u0", "u1"),
+            ("u0", "v0"),
+            ("u0", "v1"),
+            ("u1", "v0"),
+            ("u1", "v1"),
+            ("v0", "r0"),
+        ],
+        "Q6": [
+            ("u0", "u1"),
+            ("u0", "v0"),
+            ("u0", "v1"),
+            ("u1", "v0"),
+            ("u1", "v1"),
+            ("v0", "r0"),
+            ("u1", "r0"),
+        ],
+        "Q7" : [
+            ("u0", "u1"),
+            ("u0", "v0"),
+            ("u0", "v1"),
+            ("u0", "v2"),
+            ("u1", "v0"),
+            ("u1", "v1"),
+            ("u1", "v2"),
+        ],
+        "Q8": [
+            ("u0", "u1"),
+            ("u1", "u2"),
+            ("u0", "v0"),
+            ("u1", "v0"),
+            ("u2", "v0"),
+            ("u0", "v1"),
+            ("u1", "v1"),
+            ("u2", "v1"),
+        ],
+        "Q9" : [
+            ("u0", "u1"),
+            ("u0", "v0"),
+            ("u0", "v1"),
+            ("u0", "v2"),
+            ("u1", "v0"),
+            ("u1", "v1"),
+            ("u1", "v2"),
+            ("v0", "v1"),
+            ("v1", "v2"),
+        ],
+        "Q10": [
+            ("u0", "u1"),
+            ("u0", "v0"),
+            ("u0", "v1"),
+            ("u0", "v2"),
+            ("u1", "v0"),
+            ("u1", "v1"),
+            ("u1", "v2"),
+            ("v0", "v2"),
+            ("v0", "v1"),
+            ("v1", "v2"),
+        ],
+        "Q11": [
+            ("u0", "u1"),
+            ("u0", "v0"),
+            ("u0", "v1"),
+            ("u0", "v2"),
+            ("u0", "v3"),
+            ("u1", "v0"),
+            ("u1", "v1"),
+            ("u1", "v2"),
+            ("u1", "v3"),
+        ],
+        "Q12": [
+            ("u0", "u1"),
+            ("u1", "u2"),
+            ("u0", "v0"),
+            ("u1", "v0"),
+            ("u0", "v1"),
+            ("u2", "v1"),
+            ("u1", "v2"),
+            ("u2", "v2"),
+        ],
+        "Q13": [
+            ("u0", "u1"),
+            ("u0", "v0"),
+            ("u0", "v1"),
+            ("u1", "v2"),
+            ("u1", "v3"),
+            ("v0", "v2"),
+            ("v1", "v3"),
+        ],
+        "Q14": [
+            ("u0", "u1"),
+            ("u2", "u3"),
+            ("v0", "u0"),
+            ("v0", "u1"),
+            ("v0", "u2"),
+            ("v0", "u3"),
+            ("v1", "u0"),
+            ("v1", "u1"),
+            ("v1", "u2"),
+            ("v1", "u3"),
+        ],
+        "Q15": [
+            ("u0", "u1"),
+            ("u1", "u2"),
+            ("u0", "u2"),
+            ("u0", "v0"),
+            ("u1", "v0"),
+            ("u0", "v1"),
+            ("u2", "v1"),
+            ("u1", "v2"),
+            ("u2", "v2"),
+        ],
+        "Q16": [
+            ("u0", "u1"),
+            ("u1", "u2"),
+            ("u0", "v0"),
+            ("u1", "v0"),
+            ("u2", "v0"),
+            ("u0", "v1"),
+            ("u1", "v1"),
+            ("u2", "v1"),
+            ("u0", "v2"),
+            ("u1", "v2"),
+            ("u2", "v2"),
+        ]
+    }
 
-    elapse = run_query(graph, conn, use_cycle_join=False)
-    print(f"Execution time (kuzu default): {elapse:.4f} ms")
-    elapse = run_query(graph, conn, use_cycle_join=True)
-    print(f"Execution time (CycleJoin): {elapse:.4f} ms")
+    for query_name, edge_list in query_graphs.items():
+        print(query_name)
+        graph = edge_list_to_graph_with_random_label(edge_list, n_vertex_labels)
+        elapse = run_query(graph, conn, use_cycle_join=False)
+        print(f"Execution time (kuzu default): {elapse:.4f} ms.")
+        elapse = run_query(graph, conn, use_cycle_join=True)
+        print(f"Execution time (CycleJoin): {elapse:.4f} ms.")
 
 
 if __name__ == "__main__":

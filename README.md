@@ -8,7 +8,7 @@ Consult the official [building instructions](https://kuzudb.github.io/docs/devel
 
 ### Cypher Interface
 
-To execute Cypher queries with CycleJoin, simply execute the following statement beforehand:
+To execute Cypher queries with CycleJoin in any kuzu interface, simply execute the following statement beforehand:
 
 ```
 CALL ENABLE_MULTIWAY_INTERSECT=true;
@@ -18,7 +18,11 @@ Other interfaces are the same as kuzu. See [the docs of kuzu](https://kuzudb.git
 
 ### Subgraph Matching
 
-A simple example to run and evaluate subgraph matching can be found at `tools/subgraphmatching/run.py`. The format of the data graph is specified at the docstring of function `convert_dataset`. Or you can load the graph and make the query in other ways enabled by kuzu.
+A simple example to run and evaluate subgraph matching can be found at `tools/subgraphmatching/run.py`. To run it, [build the Python interface](https://kuzudb.github.io/docs/developer-guide/#python) in the build step.
+
+After building the Python interface, add the absolute path of `tools/python_api/build` to `PYTHONPATH` so that you can `import kuzu`. Then change to directory `tools/subgraphmatching` and run `run.py` as trial.
+
+`run.py` run the queries evaluated in the paper on a demo data graph. The format of the data graph is specified at the docstring of function `convert_dataset`. Else, you can load the graph and make the query in other ways enabled by kuzu, but making sure the ID is incremental and continuous.
 
 ### Investigate the CycleJoin Implementation
 
