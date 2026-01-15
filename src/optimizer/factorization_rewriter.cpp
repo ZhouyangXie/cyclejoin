@@ -1,6 +1,7 @@
 #include "optimizer/factorization_rewriter.h"
 
 #include "binder/expression_visitor.h"
+#include "planner/operator/extend/logical_shared_extend.h"
 #include "planner/operator/factorization/flatten_resolver.h"
 #include "planner/operator/logical_accumulate.h"
 #include "planner/operator/logical_aggregate.h"
@@ -175,6 +176,12 @@ void FactorizationRewriter::visitCopyTo(planner::LogicalOperator* op) {
     auto& copyTo = op->cast<LogicalCopyTo>();
     auto groupsPosToFlatten = copyTo.getGroupsPosToFlatten();
     copyTo.setChild(0, appendFlattens(copyTo.getChild(0), groupsPosToFlatten));
+}
+
+void FactorizationRewriter::visitSharedExtend(planner::LogicalOperator* op){
+    auto& extend = op->cast<LogicalSharedExtend>();
+    auto groupsPosToFlatten = extend.getGroupsPosToFlatten(); 
+    extend.setChild(0, appendFlattens(extend.getChild(0), groupsPosToFlatten));
 }
 
 std::shared_ptr<planner::LogicalOperator> FactorizationRewriter::appendFlattens(

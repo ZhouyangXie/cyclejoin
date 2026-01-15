@@ -66,7 +66,7 @@ def convert_dataset(node_table_path: str, rel_table_path: str, database_path: st
     conn.close()
 
 
-def run_query(query_graph: Graph, connection: kuzu.Connection, use_cycle_join: bool) -> float:
+def run_query(query_graph: Graph, connection: kuzu.Connection, use_cycle_join: bool) -> tuple[float, int]:
     """
     Args:
         query_graph (Graph): the query graph (see the docstring of `translate_query_graph_to_cypher`)
@@ -84,13 +84,14 @@ def run_query(query_graph: Graph, connection: kuzu.Connection, use_cycle_join: b
     cypher = translate_query_graph_to_cypher(query_graph)
     response = connection.execute(cypher)
     elapse = float(response.get_execution_time())
+    count = int(response.get_next()[0])
 
     # restor the default config
     if use_cycle_join:
         connection.execute("CALL ENABLE_MULTIWAY_INTERSECT=false;")
         connection.execute("CALL ENABLE_SEMI_MASK=true;")
 
-    return elapse
+    return elapse, count
 
 
 def edge_list_to_graph_with_random_label(edge_list: list[tuple[str, str]], label_max: int) -> Graph:
@@ -294,10 +295,10 @@ def run_example():
     for query_name, edge_list in query_graphs.items():
         print(query_name)
         graph = edge_list_to_graph_with_random_label(edge_list, n_vertex_labels)
-        elapse = run_query(graph, conn, use_cycle_join=False)
-        print(f"Execution time (kuzu default): {elapse:.4f} ms.")
-        elapse = run_query(graph, conn, use_cycle_join=True)
-        print(f"Execution time (CycleJoin): {elapse:.4f} ms.")
+        elapse, count = run_query(graph, conn, use_cycle_join=False)
+        print(f"Execution time (kuzu default): {elapse:.4f} ms. #Matching: {count}")
+        elapse, count = run_query(graph, conn, use_cycle_join=True)
+        print(f"Execution time (CycleJoin): {elapse:.4f} ms. #Matching: {count}")
 
 
 if __name__ == "__main__":

@@ -211,6 +211,9 @@ bool HashJoinProbe::getNextTuplesInternal(ExecutionContext* context) {
         for(auto v: keyVectors){
             v->getSelVectorPtr()->setSelSize(0);
         }
+        for(auto v: vectorsToReadInto){
+            v->getSelVectorPtr()->setSelSize(0);
+        }
     }
     metrics->numOutputTuple.increase(numPopulatedTuples);
     return true;

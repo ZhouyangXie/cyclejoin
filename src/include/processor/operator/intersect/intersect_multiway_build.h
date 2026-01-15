@@ -89,7 +89,7 @@ public:
             for(size_t i = 0; i < cachedKeyVectors.size(); i++){
                 append_keys[i] = cachedKeyVectors[i].get();
             }
-
+            KU_ASSERT(cachedKeyVectors[0]->state->getSelVector().getSelSize() == 1);
             std::vector<common::ValueVector*> append_payloads(cachedPayloadVectors.size(), nullptr);
             std::vector<size_t> indices(cachedPayloadVectors.size(), 0);
             bool has_unfinished = false;

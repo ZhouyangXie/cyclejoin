@@ -26,6 +26,9 @@ void LogicalSharedExtend::computeFactorizedSchema() {
         if (rels[i]->hasDirectionExpr()) {
             schema->insertToGroupAndScope(rels[i]->getDirectionExpr(), nbrGroupPos);
         }
+        if(flatScan[i]){
+            schema->flattenGroup(nbrGroupPos);
+        }
     }
 }
 

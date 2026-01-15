@@ -12,6 +12,7 @@
 #include "planner/join_order/join_tree_constructor.h"
 #include "planner/operator/extend/logical_extend.h"
 #include "planner/operator/extend/logical_shared_extend.h"
+#include "planner/operator/logical_flatten.h"
 #include "planner/operator/logical_hash_join.h"
 #include "planner/operator/scan/logical_scan_node_table.h"
 #include "planner/planner.h"
@@ -229,6 +230,13 @@ static bool replaceWithSharedExtend(LogicalPlan & plan, std::vector<bool> flatSc
     );
     // insert it
     insert_node->setChild(0, sharedExtend);
+    // add a Flatten before it
+    auto flatten = std::make_shared<LogicalFlatten>(
+        0,
+        sharedExtend->getChild(0),
+        0
+    );
+    sharedExtend->setChild(0, flatten);
     return true;
 }
 

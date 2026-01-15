@@ -83,7 +83,7 @@ public:
         propertyPredicates.resize(getNumberOfSharing());
     }
 
-    f_group_pos_set getGroupsPosToFlatten() { return f_group_pos_set{}; }
+    f_group_pos_set getGroupsPosToFlatten() { return {schema->getGroupPos(boundNode->getInternalID()->getUniqueName())};}
     void computeFactorizedSchema() override;
     void computeFlatSchema() override;
 
@@ -111,7 +111,7 @@ public:
         return std::make_unique<LogicalSharedExtendPrintInfo>(boundNode, nbrNodes, rels, directions);
     }
 
-    std::vector<bool> getFlatScan() const { return this->flatScan;}
+    const std::vector<bool> & getFlatScan() const { return this->flatScan;}
 
 private:
     std::shared_ptr<binder::NodeExpression> boundNode;

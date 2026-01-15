@@ -54,15 +54,18 @@ bool SharedScanRelTable::getNextTuplesInternal(ExecutionContext* context){
         }
     }
     for(size_t i = 0; i < getNumberOfSharing(); i++){
+        auto & scan_sel_vector = scanStates[i]->outState->getSelVectorUnsafe();
         if(!stateFinished[i]){
             stateFinished[i] = true;
             if(flattenScans[i]){
                 if((flattenScanIndex[i] + 1) < flattenScanSize[i]){
                     flattenScanIndex[i]++;
-                    auto new_position = scanStates[i]->outState->getSelVectorUnsafe().getMutableBuffer()[flattenScanIndex[i]];
-                    scanStates[i]->outState->getSelVectorUnsafe().setToFiltered(1);
-                    scanStates[i]->outState->getSelVectorUnsafe()[0] = new_position;
-                    stateFinished[i] = false;
+                    scan_sel_vector[0] = scan_sel_vector[flattenScanIndex[i]];
+                    if((flattenScanIndex[i] + 1) <= flattenScanSize[i]){
+                        stateFinished[i] = false;
+                    } else {
+                        scanStates[i]->outState->setToUnflat();
+                    }
                 } else {
                     // the current batch have been finished, scan for the next batch
                     while(tableInfos[i].table->scan(transaction, *scanStates[i])){
@@ -76,11 +79,15 @@ bool SharedScanRelTable::getNextTuplesInternal(ExecutionContext* context){
                     if(!stateFinished[i]){
                         flattenScanSize[i] = scanStates[i]->outState->getSelSize();
                         flattenScanIndex[i] = 0;
-                        scanStates[i]->outState->getSelVectorUnsafe().setSelSize(1);
+                        if(scan_sel_vector.isStatic()){
+                            scan_sel_vector.setRange(0, scan_sel_vector.getSelSize());
+                        }
+                        scan_sel_vector.setToFiltered(1);
+                        scanStates[i]->outState->setToFlat();
                     } else {
                         flattenScanSize[i] = 0;
                         flattenScanIndex[i] = 0;
-                        scanStates[i]->outState->getSelVectorUnsafe().setSelSize(0);
+                        scan_sel_vector.setSelSize(0);
                     }
                 }
             } else {
@@ -94,10 +101,10 @@ bool SharedScanRelTable::getNextTuplesInternal(ExecutionContext* context){
                 }
             }
             if(stateFinished[i]){
-                scanStates[i]->outState->getSelVectorUnsafe().setSelSize(0);
+                scan_sel_vector.setSelSize(0);
             }
         } else {
-            scanStates[i]->outState->getSelVectorUnsafe().setSelSize(0);
+            scan_sel_vector.setSelSize(0);
         }
     }
     return true;

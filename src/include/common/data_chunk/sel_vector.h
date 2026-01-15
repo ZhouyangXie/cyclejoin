@@ -167,6 +167,8 @@ public:
 
     std::string toString() const;
 
+    sel_t getCapacity() const {return capacity;}
+
 private:
     std::unique_ptr<sel_t[]> selectedPositionsBuffer;
     sel_t capacity;

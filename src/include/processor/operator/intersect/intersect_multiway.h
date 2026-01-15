@@ -157,6 +157,7 @@ public:
 private:
     bool probeHTs();
     bool multiway_intersect_on_sorted_tuples(size_t rightSideNodeIdx);
+    void fill_output_vector_with_cache(size_t rightSideNodeIdx, size_t cacheIdx);
 
 private:
     std::shared_ptr<IntersectMultiwayDataInfo> info;
@@ -169,14 +170,13 @@ private:
     std::vector<std::shared_ptr<common::ValueVector>> outKeyVectors;
     // same sizes as intersectDataInfo.payloadsDataPos and intersectDataInfo.payloadsColRange
     std::vector<std::vector<std::vector<common::ValueVector*>>> payloadVectorsToScanInto;
+    // size() == numRightNodes()
+    std::vector<std::vector<std::unique_ptr<common::ValueVector>>> cachedIntersectionResults;
 
     // pointer to the probed tuples in each hash table
     // the first 2 dimensions are of size numLeftNodes() x numRightNodes(), third dimension is the
     // number of probed tuples
     std::vector<std::vector<std::vector<common::overflow_value_t>>> probedIds;
-    // sel vectors on each of probedIds
-    std::vector<std::vector<std::vector<std::shared_ptr<common::SelectionVector>>>>
-        intersectSelVectors;
 
     // this operator outputs the Cartesian product of intersections
     // this state stores the loop state
@@ -194,26 +194,16 @@ struct IntersectionLoopState {
     std::vector<size_t> tuple_cursors;
     IntersectMultiway* op;
     bool finished;
-    std::vector<size_t> smallesLeftSide;
 
     explicit IntersectionLoopState(IntersectMultiway* op) : op{op}, finished{true} {
         tuple_cursors.resize(op->numRightNodes(), 0);
-        smallesLeftSide.resize(op->numRightNodes(), -1u);
-        // Choose the one with least number of tuples to iterate
-        for (size_t j = 0; j < op->numRightNodes(); j++) {
-            for (auto i : op->info->right2left_idx[j]) {
-                if (smallesLeftSide[j] == -1u || op->intersectSelVectors[i][j].size() < op->intersectSelVectors[smallesLeftSide[j]][j].size()) {
-                    smallesLeftSide[j] = i;
-                }
-            }
-        }
     }
 
     void reset();
 
     bool cursorFinished(size_t j) const {
-        return cursorAt(j) >=
-               op->probedIds[op->info->right2left_idx[j][smallesLeftSide[j]]][j].size();
+        return cursorAt(j) >= op->cachedIntersectionResults[j].size() || 
+            op->cachedIntersectionResults[j][cursorAt(j)]->getSelVectorPtr()->getSelSize() == 0;
     };
 
     bool hasFinished() const { return finished; }
