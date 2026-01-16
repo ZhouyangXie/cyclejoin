@@ -1,6 +1,6 @@
 ## CycleJoin
 
-This is the implementation of paper "CycleJoin: An Efficient Join-based Algorithm for Multi-Cyclic Subgraph Matching" (under review) based on [kuzu](https://github.com/kuzudb/kuzu).
+This is the implementation of paper "CycleJoin: An Efficient Join-based Algorithm for Multi-Cyclic Subgraph Matching" (under review) based on [kuzu](https://github.com/kuzudb/kuzu). Should you have any question with the code, contact the author via zhouyang.xie@unsw.edu.au or leave an issue.
 
 ### Build
 
@@ -38,6 +38,6 @@ The algorithms of CycleJoin (see pseudocode in the paper) are implemented in the
 
 * Physical operator of SharedScan (sharing the rel table scanning): [.h](https://github.com/ZhouyangXie/cyclejoin/blob/dev-multiwaywcoj/src/include/processor/operator/scan/shared_scan_rel_table.h), [.cpp](https://github.com/ZhouyangXie/cyclejoin/blob/dev-multiwaywcoj/src/processor/operator/scan/shared_scan_rel_table.cpp).
 
-* The CycleJoin-enabled query optimizer entrance (Algorithm 3): [.cpp:250](https://github.com/ZhouyangXie/cyclejoin/blob/dev-multiwaywcoj/src/planner/plan/plan_join_order.cpp#L250C13-L250C57).
+* The CycleJoin-enabled query optimizer entrance (Algorithm 3): [.cpp](https://github.com/ZhouyangXie/cyclejoin/blob/dev-multiwaywcoj/src/planner/plan/plan_join_order.cpp) at function: `Planner::planQueryGraphWithMultiwayIntersect`.
 
 * Finding basic paths, finding and comparing cycle-join graphs, finding external paths (Algorithm 4 and 5): [.hpp](https://github.com/ZhouyangXie/cyclejoin/blob/dev-multiwaywcoj/src/include/binder/query/query_graph_simple.hpp).
