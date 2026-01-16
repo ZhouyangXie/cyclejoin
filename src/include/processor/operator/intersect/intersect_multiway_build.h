@@ -159,6 +159,7 @@ public:
                 dst->copyFromVectorData(dst->getSelVectorPtr()->getSelSize(), src, j);
                 dst->getSelVectorPtr()->incrementSelSize(1);
             }
+            src->getSelVectorPtr()->setSelSize(0);
         }
     }
 

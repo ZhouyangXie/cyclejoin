@@ -69,11 +69,15 @@ bool HashJoinProbe::getMatchedTuplesForFlatKey(ExecutionContext* context) {
 bool HashJoinProbe::getMatchedTuplesForUnFlatKey(ExecutionContext* context) {
     KU_ASSERT(keyVectors.size() == 1);
     auto keyVector = keyVectors[0];
-    restoreSelVector(*keyVector->state);
+    if(!allowEmptyJoinResult){
+        restoreSelVector(*keyVector->state);
+    }
     if (!children[0]->getNextTuple(context)) {
         return false;
     }
-    saveSelVector(*keyVector->state);
+    if(!allowEmptyJoinResult){
+        saveSelVector(*keyVector->state);
+    }
     // Find the entrance of the chain.
     // Assign the entrance to `hashSelVec`(successful?) and `probeState->probeTuples`(pointer to the entrance tuple).
     sharedState->getHashTable()->probe(keyVectors, *hashVector, hashSelVec, tmpHashVector.get(),

@@ -293,6 +293,7 @@ bool IntersectMultiway::multiway_intersect_on_sorted_tuples(size_t rightSideNode
                     if (currentResultCacheId == resultCache.size()) {
                         resultCache.emplace_back(
                             std::make_unique<ValueVector>(common::LogicalType::INTERNAL_ID()));
+                        resultCache.back()->setState(std::make_shared<common::DataChunkState>());
                         resultCache.back()->getSelVectorPtr()->setSelSize(0);
                     }
                     multiplied_count -= movableSize;
