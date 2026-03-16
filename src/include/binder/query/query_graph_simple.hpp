@@ -37,13 +37,18 @@ struct Graph {
         return it->second;
     }
 
-    bool isConnected(const Graph other) const {
-        for (auto& u : nodes) {
-            if (other.nodes.contains(u)) {
-                return true;
+    bool isConnectedAndDifferent(const Graph other) const {
+        bool is_connected = false;
+        bool has_new_node = false;
+        for (auto& v: other.nodes){
+            if (!nodes.contains(v)) {
+                has_new_node = true;
+            }
+            else {
+                is_connected = true;
             }
         }
-        return false;
+        return is_connected && has_new_node;
     }
 
     Graph merge(const Graph other) const {
@@ -595,7 +600,7 @@ std::pair<Graph, std::vector<std::vector<Path>>> findBestCycleJoin(const Graph& 
         std::vector<Graph> P_next;
         for (auto& basic : P_basic) {
             Graph G_basic = pathToGraph(basic);
-            if (G_probe.isConnected(G_basic)) {
+            if (G_probe.isConnectedAndDifferent(G_basic)) {
                 P_next.push_back(G_probe.merge(G_basic));
             }
         }
