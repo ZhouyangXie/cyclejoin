@@ -290,6 +290,21 @@ void extendPath(Path& path, const Graph& graph, const Nodes& visited) {
 
 std::vector<Path> findBasicCycleIntersection(const Graph& graph_) {
     Graph graph = graph_.copy();
+    do {
+        Nodes to_remove;
+        for (const Node& u : graph.nodes) {
+            if (graph.getNeighbors(u).size() < 2) {
+                to_remove.insert(u);
+            }
+        }
+        if (to_remove.size() == 0) {
+            break;
+        }
+        for (const Node& u : to_remove) {
+            graph.removeNode(u);
+        }
+    } while (true);
+
     std::vector<Path> paths;
     Nodes visited;
     for (const Node& start : graph.nodes) {
