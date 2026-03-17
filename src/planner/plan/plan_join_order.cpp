@@ -312,6 +312,10 @@ LogicalPlan Planner::planQueryGraphWithMultiwayIntersect(
         // find join condition (node intersection)
         expression_vector join_nodes;
         for(auto & join_node: remainingGraphSimple.nodes){
+            if(G_probe.nodes.contains(join_node)){
+                join_nodes.push_back(queryGraph.getQueryNode(join_node)->getInternalID());
+                continue;
+            }
             for(auto & buildGraphSimple: buildGraphsSimple){
                 if(buildGraphSimple.nodes.contains(join_node)){
                     join_nodes.push_back(queryGraph.getQueryNode(join_node)->getInternalID());
