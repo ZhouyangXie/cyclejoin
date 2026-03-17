@@ -47,6 +47,23 @@ void LogicalIntersectMultiway::computeFactorizedSchema() {
             }
         }
     }
+    // insert all the intermediate expressions in the build schemas to the new schema
+    for (auto leftNode: leftExpressions){
+        auto build_schema = leftToBuildChildren[leftNode]->getSchema();
+        for(auto group_pos: build_schema->getGroupsPosInScope()){
+            auto group = build_schema->getGroup(group_pos);
+            auto new_group_pos = schema->createGroup();
+            auto new_group = schema->getGroup(new_group_pos);
+            if(group->isFlat()){
+                new_group->setFlat();
+            }
+            for(auto exp: group->getExpressions()){
+                if(!schema->isExpressionInScope(*exp)){
+                    schema->insertToGroupAndScope(exp, new_group_pos);
+                }
+            }
+        }
+    }
 }
 
 void LogicalIntersectMultiway::computeFlatSchema() {
@@ -61,6 +78,18 @@ void LogicalIntersectMultiway::computeFlatSchema() {
             for (auto& expression : group->getExpressions()) {
                 if (expression->getUniqueName() != rightNode->getUniqueName()) {
                     schema->insertToGroupAndScopeMayRepeat(expression, 0);
+                }
+            }
+        }
+    }
+    // insert all the intermediate expressions in the build schemas to the new schema
+    for (auto leftNode: leftExpressions){
+        auto build_schema = leftToBuildChildren[leftNode]->getSchema();
+        for(auto group_pos: build_schema->getGroupsPosInScope()){
+            auto group = build_schema->getGroup(group_pos);
+            for(auto exp: group->getExpressions()){
+                if(!schema->isExpressionInScope(*exp)){
+                    schema->insertToGroupAndScope(exp, 0);
                 }
             }
         }
